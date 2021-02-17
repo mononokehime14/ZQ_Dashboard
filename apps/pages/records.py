@@ -189,6 +189,7 @@ layout = [
             # Main Content
             html.Div(
                 [
+                    #Top bar
                     html.Div(
                         [
                             draw_upper_block()
@@ -196,6 +197,7 @@ layout = [
                         id = 'chech_records_upper_block',
                         style = {'padding':'10px'}
                     ),
+                    #datatable block
                     html.Div(
                         [
                             html.Div(
@@ -239,6 +241,7 @@ def generate_little_chart(true_count, false_count):
     )
     return fig
 
+#following callback updates everything (including download)
 @app.callback(
     [Output('datatable','data'),
     Output('date_selector_output','children'),

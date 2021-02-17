@@ -522,6 +522,7 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
             total_count -= temp_value
     return label_list,value_list,total_count
 
+#this callback uses filted data to updata char, status block, bar graph and so on.
 @app.callback(
     [
         # General Status block diagram value
@@ -629,7 +630,7 @@ def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,
     return output
 
 
-
+#this callback uses date picker range to filte data
 @app.callback(
     Output('intermediate-value', 'data'),
     [Input('date-picker-range','start_date'),
