@@ -4,18 +4,51 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import pandas as pd
+import re
 
 from app import app
 import data_manager
-from pages import summary, substation
+from pages import summary_3, search,records
 
+import sqlalchemy
+from sqlalchemy.orm import scoped_session, sessionmaker
+from flask import Flask
 
 server = app.server
+
+#following code reads data from local PostgreSQL server (in docker container)
+conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+engine = sqlalchemy.create_engine(conn_url)
+df = pd.read_sql_table('notificationlist',con = engine)
+
+#if no local PostgreSQL, you can read from data folder
+#df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True)
+
+df['notification_date'] = pd.to_datetime(df['notification_date'])
+
+#if first time dealing with this data, process & add consecutive false column
+if ('consecutive_false' not in df.columns):
+    df['consecutive_false'] = 0
+    consecutive_false_dic = {}
+    dff = df.groupby(['meter_no','contract_acct'])
+    for index,row in dff:
+        row.sort_values(by = 'notification_date')
+        false_count = 0
+        for index,row2 in row.iterrows():
+            if row2['prediction'] == 'False':
+                false_count += 1
+            elif row2['prediction'] == 'True':
+                false_count = 0
+        for i in row['notification_no']:
+            consecutive_false_dic[i] = false_count
+    for index,row in df.iterrows():
+        df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
+    df.to_sql('notificationlist',con=engine,if_exists='replace')
 
 
 app.layout = html.Div(
     [
-        dcc.Store(id="dummy_store", data=data_manager.get_dummy_data().to_json(orient="split")),
+        dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
 
         # represents the URL bar, doesn't render anything
         dcc.Location(id='url', refresh=False),
@@ -93,11 +126,15 @@ def display_page(pathname):
     pages = {
         "/": {
             "title": "Summary",
-            "layout": summary.layout
+            "layout": summary_3.layout
         },
-        "/substation": {
-            "title": "Substation",
-            "layout": substation.layout
+        "/search": {
+            "title": "Query",
+            "layout": search.layout
+        },
+        "/records": {
+            "title": "Records",
+            "layout": records.layout
         },
     }
 
@@ -128,10 +165,6 @@ def display_page(pathname):
     ])
 
     return layout, tabs
-
-
-
-
 
 
 
