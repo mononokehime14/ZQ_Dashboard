@@ -13,37 +13,75 @@ from pages import summary_3, search,records
 import sqlalchemy
 from sqlalchemy.orm import scoped_session, sessionmaker
 from flask import Flask
+import timeit
 
 server = app.server
 
 #following code reads data from local PostgreSQL server (in docker container)
-conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-engine = sqlalchemy.create_engine(conn_url)
-df = pd.read_sql_table('notificationlist',con = engine)
+# conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+# engine = sqlalchemy.create_engine(conn_url)
+# df = pd.read_sql_table('notificationlist',con = engine)
 
 #if no local PostgreSQL, you can read from data folder
-#df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True)
+df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True,dtype={'prediction': str})
 
 df['notification_date'] = pd.to_datetime(df['notification_date'])
 
+def find_consecutive_false(group):
+    if(len(group) > 1):
+        #group = group.sort('notification_date',ascending = True)
+        group.sort_values(by = 'notification_date')
+        false_count = 0
+        for index,row2 in group.iterrows():
+            if row2['prediction'] == 'FALSE':
+                false_count += 1
+            elif row2['prediction'] == 'TRUE':
+                false_count = 0
+        for i in group['notification_no']:
+            consecutive_false_dic[i] = false_count
+    else:
+        for i in group['notification_no']:
+            consecutive_false_dic[i] = 0
+    return 0
+
+def update_consecutive_false(group):
+    for i in group:
+        false_count = consecutive_false_dic[i]
+    return false_count
+
 #if first time dealing with this data, process & add consecutive false column
 if ('consecutive_false' not in df.columns):
-    df['consecutive_false'] = 0
+    print(df['prediction'].dtypes)
+    print(df['prediction'])
+    #df['consecutive_false'] = 0
     consecutive_false_dic = {}
-    dff = df.groupby(['meter_no','contract_acct'])
-    for index,row in dff:
-        row.sort_values(by = 'notification_date')
-        false_count = 0
-        for index,row2 in row.iterrows():
-            if row2['prediction'] == 'False':
-                false_count += 1
-            elif row2['prediction'] == 'True':
-                false_count = 0
-        for i in row['notification_no']:
-            consecutive_false_dic[i] = false_count
-    for index,row in df.iterrows():
-        df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
-    df.to_sql('notificationlist',con=engine,if_exists='replace')
+    starttime = timeit.default_timer()
+    print("The start time is :",starttime)
+    dff = df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
+    print("The time difference is :", timeit.default_timer() - starttime)
+
+    starttime = timeit.default_timer()
+    print("The start time is :",starttime)
+    # for index,row in df.iterrows():
+    #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
+    df['consecutive_false'] = df.groupby(['notification_no'])['notification_no'].transform(lambda x: update_consecutive_false(x))
+    print("The time difference is :", timeit.default_timer() - starttime)
+
+    #dff = df.groupby(['meter_no','contract_acct'])
+    # for index,row in dff:
+    #     row.sort_values(by = 'notification_date')
+    #     false_count = 0
+    #     for index,row2 in row.iterrows():
+    #         if row2['prediction'] == 'False':
+    #             false_count += 1
+    #         elif row2['prediction'] == 'True':
+    #             false_count = 0
+    #     for i in row['notification_no']:
+    #         consecutive_false_dic[i] = false_count
+    # for index,row in df.iterrows():
+    #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
+
+    #df.to_sql('notificationlist',con=engine,if_exists='replace')
 
 
 app.layout = html.Div(
