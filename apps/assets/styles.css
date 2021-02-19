@@ -177,6 +177,6 @@ a.clickable-card:hover{
   background:#fff;
   background:var(--color-panel);
   outline-offset:-1px;
-  width:100px;
+  width:120px;
   font-size: 8px;
 }

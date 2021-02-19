@@ -225,52 +225,49 @@ def manipulation_bar():
                         className = 'datepicker_for_summary_page',
                     ),
                 ],
+                className = 'u-grid-center',
                 style={'width':'100%'}
             ),
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    dcc.Input(
-                                        type="text",
-                                        placeholder="consecutive_FALSE",
-                                        id = 'add_column_input',
-                                        className="input",
-                                    ),
-                                ],
-                                className = 'col-sm-6 col-md-9 col-lg-8 u-cell',
-                            ),
-                            html.Div(
-                                [
-                                    html.Button('Add', 
-                                    id = 'add_column_button', 
-                                    className='lm--button--secondary u-pv2',
-                                    ),
-                                ],                            
-                                className = 'col-sm-6 col-md-2 col-lg-3 u-cell',
-                            ),
+            # html.Div(
+            #     [
+            #         html.Div(
+            #             [
+            #                 html.Div(
+            #                     [
+            #                         dcc.Input(
+            #                             type="text",
+            #                             placeholder="consecutive_FALSE",
+            #                             id = 'add_column_input',
+            #                             className="input",
+            #                         ),
+            #                     ],
+            #                     className = 'col-sm-6 col-md-9 col-lg-8 u-cell',
+            #                 ),
+            #                 html.Div(
+            #                     [
+            #                         html.Button('Add', 
+            #                         id = 'add_column_button', 
+            #                         className='lm--button--secondary u-pv2',
+            #                         ),
+            #                     ],                            
+            #                     className = 'col-sm-6 col-md-2 col-lg-3 u-cell',
+            #                 ),
 
-                        ],
-                        className = 'u-grid',
-                    ),
-                ],
-                className = 'u-pv2',
-                style={'height':'100%','display':'block'}
-            ),
+            #             ],
+            #             className = 'u-grid',
+            #         ),
+            #     ],
+            #     className = 'u-pv2',
+            #     style={'height':'100%','display':'block'}
+            # ),
             html.Div(
                 [
-                    html.Div(
+                    html.Button(
                         [
-                            html.Button(
-                                [
-                                    html.P('Save Changes',className = 'h4'),
-                                ],
-                                id = 'save_change_button',
-                                className='lm--button--primary',
-                            ),
+                            html.P('Save Changes',className = 'h4'),
                         ],
+                        id = 'save_change_button',
+                        className='lm--button--primary',
                     ),
                 ],
                 # className = 'u-grid u-grid-center@md u-grid-center@sm u-pv2',
@@ -325,7 +322,7 @@ def footer():
 
 
 layout = [
-    dcc.Store(id="intermediate-value"),
+    dcc.Store(id="intermediate-value",storage_type='session'),
     html.Div(
         [
             # Main Content
@@ -468,7 +465,7 @@ def generate_substation_health_card_values(fig, total_count, ok_count, alarm_cou
 def draw_consecutive_true_bar(df):
 
     dff = df.groupby(['consecutive_false'])['notification_no'].size()
-
+    dff = dff.iloc[1:]
     fig = go.Figure()
     fig.add_trace(go.Bar(y = dff,
                     x = dff.index,
@@ -612,7 +609,6 @@ def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,
         total_count = meter_count + low_consumption + high_consumption + other_cause
         df_for_bar = df
 
-    # print(df_for_bar)
     fig = generate_donut_chart(label_list,value_list)
     content = generate_substation_health_card_values(fig, total_count, meter_count, alarm_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
@@ -623,9 +619,12 @@ def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,
     df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
     more_than_2 = [f"{len(df_for_bar.index)}"]
     output.append(more_than_2)
-    df_for_bar['notification_date'] = pd.to_datetime(df_for_bar['notification_date'])
-    df_for_bar.sort_values(by = 'notification_date')
-    latest = df_for_bar.tail(1)['notification_date'].dt.strftime('%Y-%m-%d')
+    if(more_than_2 == 0):
+        latest = 'None'
+    else:
+        df_for_bar['notification_date'] = pd.to_datetime(df_for_bar['notification_date'])
+        df_for_bar.sort_values(by = 'notification_date')
+        latest = df_for_bar.tail(1)['notification_date'].dt.strftime('%Y-%m-%d')
     output.append(latest)
     return output
 
@@ -634,22 +633,23 @@ def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,
 @app.callback(
     Output('intermediate-value', 'data'),
     [Input('date-picker-range','start_date'),
-    Input('date-picker-range','end_date'),
-    Input('add_column_button','n_clicks'),
-    Input('add_column_input','value')],
+    Input('date-picker-range','end_date')],
     State('memory-value','data')
 )
 
-def update_date_range(start_date,end_date,n_clicks,column_name,df):
+def update_date_range(start_date,end_date,df):
     df = pd.read_json(df, orient="split")
 
     df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
     df['notification_date'] = pd.to_datetime(df['notification_date'])
 
-    if (start_date is not None):
-        df = df[df['notification_date'] > dt.datetime.strptime(start_date,"%Y-%m-%d")]
-    if (end_date is not None):
-        df = df[df['notification_date'] < dt.datetime.strptime(end_date,"%Y-%m-%d")]
+    if (start_date is not None) & (end_date is not None):
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        if(start_date < end_date):
+            df = df[df['notification_date'] > start_date]
+        # if (end_date is not None):
+            df = df[df['notification_date'] < end_date]
 
     #following code is moved to index page, to do it just once
     # df['consecutive_false'] = 0

@@ -15,6 +15,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from flask import Flask
 import timeit
 
+
 server = app.server
 
 #following code reads data from local PostgreSQL server (in docker container)
@@ -44,15 +45,14 @@ def find_consecutive_false(group):
             consecutive_false_dic[i] = 0
     return 0
 
-def update_consecutive_false(group):
-    for i in group:
-        false_count = consecutive_false_dic[i]
-    return false_count
+# def update_consecutive_false(group):
+#     for i in group:
+#         false_count = consecutive_false_dic[i]
+#     return false_count
 
 #if first time dealing with this data, process & add consecutive false column
 if ('consecutive_false' not in df.columns):
-    print(df['prediction'].dtypes)
-    print(df['prediction'])
+
     #df['consecutive_false'] = 0
     consecutive_false_dic = {}
     starttime = timeit.default_timer()
@@ -64,7 +64,8 @@ if ('consecutive_false' not in df.columns):
     print("The start time is :",starttime)
     # for index,row in df.iterrows():
     #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
-    df['consecutive_false'] = df.groupby(['notification_no'])['notification_no'].transform(lambda x: update_consecutive_false(x))
+    # df['consecutive_false'] = df.groupby(['notification_no'])['notification_no'].transform(lambda x: update_consecutive_false(x))
+    df['consecutive_false']= df.apply(lambda x: consecutive_false_dic[x['notification_no']], axis=1)
     print("The time difference is :", timeit.default_timer() - starttime)
 
     #dff = df.groupby(['meter_no','contract_acct'])

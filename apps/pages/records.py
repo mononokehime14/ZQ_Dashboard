@@ -27,8 +27,6 @@ def draw_datatable():
                 sort_action="native",
                 sort_mode="multi",
                 column_selectable="single",
-                row_selectable="multi",
-                row_deletable=True,
                 selected_columns=[],
                 selected_rows=[],
                 page_action="native",
@@ -73,10 +71,11 @@ def draw_upper_block():
                                                 initial_visible_month=dt.date(2021, 1, 8),
                                                 date=dt.date(2021, 1, 8),
                                                 className = 'datepicker_for_records_page',
+                                                style = {'width':'100px','height':'44px'},
                                             ),
                                         ],
                                         id = 'date_selector_div',
-                                        className = 'col-sm-3 col-md-3 col-lg-3 u-cell forchecking',
+                                        className = 'col-sm-3 col-md-3 col-lg-3 u-cell',
                                     ),
                                     html.Div(
                                         [
@@ -90,10 +89,11 @@ def draw_upper_block():
                                                     {'label':'All Time','value':'all time'},
                                                 ],
                                                 value='all time',
+                                                style = {'width':'120px','height':'44px'},
                                             ),
                                         ],
                                         id = 'consecutive_false_trace_div',
-                                        className  = 'col-sm-3 col-md-3 col-lg-3 u-cell forchecking',
+                                        className  = 'col-sm-3 col-md-3 col-lg-3 u-cell',
                                     ),
                                     html.Div(
                                         [
@@ -101,12 +101,12 @@ def draw_upper_block():
                                                 'Apply',
                                                 id= 'date_selector_button',
                                                 n_clicks = 0,
-                                                className = 'lm--button--primary',
+                                                className = 'lm--button--primary u-mt1',
                                                 style = {'height':'40px','width':'80px'}
                                             ),
                                         ],
                                         id = 'date_selector_button_div',
-                                        className = 'col-sm-3 col-md-3 col-lg-3 u-cell forchecking',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
                                     ),
                                     html.Div(
                                         [
@@ -122,12 +122,12 @@ def draw_upper_block():
                                                 ],
                                                 id= 'csv_download_button',
                                                 n_clicks = 0,
-                                                className = 'lm--button--primary',
+                                                className = 'lm--button--primary u-mt1',
                                                 style = {'height':'40px','width':'80px'}
                                             ),
                                         ],
                                         id = 'csv_download_button_div',
-                                        className = 'col-sm-3 col-md-3 col-lg-3 u-cell forchecking',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
                                     ),
                                 ],
                                 className = 'u-grid',
@@ -146,7 +146,7 @@ def draw_upper_block():
                         style = {'display':'block','height':'100%'}
                     ),
                 ],
-                className = 'col-sm-6 col-md-6 col-lg-6 u-cell forchecking',
+                className = 'col-sm-6 col-md-6 col-lg-6 u-cell',
             ),
             html.Div(
                 [
@@ -176,7 +176,7 @@ def draw_upper_block():
                         style = {'text-align':'right'}
                     ),
                 ],
-                className = 'col-sm-3  col-md-3  col-lg-3  u-cell forchecking',
+                className = 'col-sm-3  col-md-3  col-lg-3  u-cell',
             ),
         ],
         className = 'lm--card u-pv2 u-grid',
@@ -254,7 +254,7 @@ def generate_little_chart(true_count, false_count):
     [Input('date_selector_single','date'),
     Input('date_selector_button','n_clicks'),
     Input('consecutive_false_trace','value'),
-    Input('date_selector_button','n_clicks')],
+    Input('csv_download_button','n_clicks')],
 
     State('memory-value','data')
 )
@@ -266,7 +266,7 @@ def update_records(date,n_clicks,trace_option,download_clicks,df):
         df['notification_date'] = pd.to_datetime(df['notification_date'])
 
         start_date = dt.datetime.strptime(date,"%Y-%m-%d")
-        if trace_option == ' last week':
+        if trace_option == 'last week':
             end_date = start_date - dt.timedelta(days=7)
         elif trace_option == 'last month':
             end_date = start_date - dt.timedelta(days=30)
@@ -276,21 +276,21 @@ def update_records(date,n_clicks,trace_option,download_clicks,df):
             end_date = start_date - dt.timedelta(days=365)
         elif trace_option == 'all time':
             end_date = dt.datetime(2019, 4, 17)
-
+        print(end_date)
         # df['meter_contract_no'] = df[['​meter_no', 'contract_acct']].apply(lambda x: ''.join(x), axis=1)
         df['meter_contract_no'] = df['meter_no'] + df['contract_acct']
         combine_list = df[df['notification_date'] == start_date]['meter_contract_no'].tolist()
         dff = df[(df['notification_date'] <= start_date) & (df['notification_date'] >= end_date) & (df['consecutive_false'] != 0) & (df['meter_contract_no'].isin(combine_list))]
 
         consecutive_false_dic = {}
-        dfff = dff.groupby(['meter_contract_no'])
+        dfff = dff.groupby(['meter_no','contract_acct'])
         for index,row in dfff:
             row.sort_values(by = 'notification_date')
             false_count = 0
             for index,row2 in row.iterrows():
-                if row2['prediction'] == 'False':
+                if row2['prediction'] == 'FALSE':
                     false_count += 1
-                elif row2['prediction'] == 'True':
+                elif row2['prediction'] == 'TRUE':
                     false_count = 0
             for i in row['notification_no']:
                 consecutive_false_dic[i] = false_count
@@ -301,7 +301,7 @@ def update_records(date,n_clicks,trace_option,download_clicks,df):
         df = pd.concat([df,dff])            
         drop_columns = list(set(df.columns) - set(display_columns))
         df.drop(drop_columns,axis=1)
-        true_count = len(df[df['prediction'] == 'True'].index)
+        true_count = len(df[df['prediction'] == 'TRUE'].index)
         false_count = len(df.index) - true_count            
         label = f'You have chosen date: {date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):
@@ -314,9 +314,11 @@ def update_records(date,n_clicks,trace_option,download_clicks,df):
                     'responsive': True},
             style={'width': '48px','height':'48px'},
         )]
-
-        csv_string = df.to_csv(index=False, encoding='utf-8')
-        csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+        if download_clicks > 0:
+            csv_string = df.to_csv(index=False, encoding='utf-8')
+            csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+        else:
+            csv_string = ''
         return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string,f'{date}-records.csv']
     return [None,'Select a date to check its records',None,'','',"dayily_records.csv"]
 
