@@ -113,7 +113,7 @@ def search_result_display_none():
                 [
                     html.Div(
                         [
-                            html.P('Ooops, no results have been found',className = 'h2')
+                            html.P('Ooops, no results have been found',className = 'h2',style = {'color':'#818A91'})
                         ],
                         style={'text-align':'center'}
                     )
@@ -155,6 +155,15 @@ layout = [
                     ),
                     html.Div(
                         [
+                            html.Div(
+                                id = 'trend_graph_div',
+                            ),
+                        ],
+                        id = 'display_search_result_trend_block',
+                        className = 'u-mv1',
+                    ),
+                    html.Div(
+                        [
                             
                         ],
                         id = 'display_search_result_block',
@@ -173,14 +182,18 @@ def turn_into_display_list(row,output_display):
     date = row['notification_date'].strftime('%Y-%m-%d')
     return output_display.extend(search_result_display(id_name,date,row['prediction'],row['cause_code']))
 
+def turn_prediction_to_number(x):
+    return 1 if x == 'False' else -1
+
 @app.callback(
-    Output('display_search_result_block','children'),
+    [Output('trend_graph_div','children'),
+    Output('display_search_result_block','children')],
     [Input('search_button','n_clicks'),
     Input('search_input_content','value')],
-    State('memory-value','data')
+    #State('memory-value','data')
 )
 
-def update_search_result(n_clicks,input_value,df):
+def update_search_result(n_clicks,input_value):
     if(n_clicks > 0):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
@@ -193,9 +206,54 @@ def update_search_result(n_clicks,input_value,df):
 
         if output.empty:
             print("The time difference is :", timeit.default_timer() - starttime)
-            return search_result_display_none()
+            return [[],search_result_display_none()]
         else:
             output_display = []
             output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
             print("The time difference is :", timeit.default_timer() - starttime)
-            return output_display
+            #output.sort_values(by = 'notification_date')
+            output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x))
+            x = output['notification_date']
+            y = output['prediction_in_number']
+            print(y.unique())
+            print(x.sort_values(ascending = True))
+            fig = go.Figure()
+            fig.add_trace(
+                go.Scatter(
+                    x = x,
+                    y = y,
+                    name = 'linear',
+                    line_shape = 'vh',
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x = x,
+                    y = [0] * (y.size),
+                    name = 'linear',
+                    line_color = 'red',
+                )
+            )
+            fig.update_traces(
+                mode = 'lines+markers',
+            )
+            fig.update_layout(
+                yaxis = dict(
+                    tickmode = 'array',
+                    tickvals = y.unique()
+                ),
+                xaxis = dict(
+                    tickmode = 'array',
+                    tickvals = x.sort_values(ascending = True)
+                )
+            )
+            trend_graph = [
+                dcc.Graph(
+                    id = 'trend_graph_plot',
+                    figure = fig,
+                    style = {'width':'100%'},
+                )
+            ]
+            return [trend_graph, output_display]
+    else:
+        return [[],[]]
