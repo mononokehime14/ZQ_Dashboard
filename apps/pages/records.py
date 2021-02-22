@@ -9,6 +9,7 @@ from pathlib import Path
 import math
 import datetime as dt
 import urllib.parse
+import sqlalchemy
 
 from app import app
 
@@ -261,9 +262,13 @@ def generate_little_chart(true_count, false_count):
 
 def update_records(date,n_clicks,trace_option,download_clicks,df):
     if(n_clicks>0) & (date is not None):
-        df = pd.read_json(df,orient="split")
-        df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
+        #df = pd.read_json(df,orient="split")
+        conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+        engine = sqlalchemy.create_engine(conn_url)
+        df = pd.read_sql_table('notificationlist',con = engine)
+        #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
         df['notification_date'] = pd.to_datetime(df['notification_date'])
+  
 
         start_date = dt.datetime.strptime(date,"%Y-%m-%d")
         if trace_option == 'last week':
@@ -288,9 +293,9 @@ def update_records(date,n_clicks,trace_option,download_clicks,df):
             row.sort_values(by = 'notification_date')
             false_count = 0
             for index,row2 in row.iterrows():
-                if row2['prediction'] == 'FALSE':
+                if row2['prediction'] == 'False':
                     false_count += 1
-                elif row2['prediction'] == 'TRUE':
+                elif row2['prediction'] == 'True':
                     false_count = 0
             for i in row['notification_no']:
                 consecutive_false_dic[i] = false_count
@@ -301,7 +306,7 @@ def update_records(date,n_clicks,trace_option,download_clicks,df):
         df = pd.concat([df,dff])            
         drop_columns = list(set(df.columns) - set(display_columns))
         df.drop(drop_columns,axis=1)
-        true_count = len(df[df['prediction'] == 'TRUE'].index)
+        true_count = len(df[df['prediction'] == 'True'].index)
         false_count = len(df.index) - true_count            
         label = f'You have chosen date: {date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):

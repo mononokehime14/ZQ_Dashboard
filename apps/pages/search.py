@@ -8,6 +8,8 @@ import pandas as pd
 from pathlib import Path
 import math
 import datetime
+import timeit
+import sqlalchemy
 
 from app import app
 
@@ -44,14 +46,13 @@ def search_bar():
         #style= {'display':'inline-block'},
     )
 
-def search_result_display_dot(attention):
-    if attention == 'TRUE':
-        
+def search_result_display_dot(prediction):
+    if prediction == 'True':        
         return html.Span(className="healthy-search-result-dot",style={'background-color':'#e54545'})
     else:
         return html.Span(className="healthy-search-result-dot",style={'background-color':'#48dcc0'})
 
-def search_result_display(attention, notification_id,notification_date,prediction,cause_code):
+def search_result_display(notification_id,notification_date,prediction,cause_code):
     return [
         html.Div(
             [
@@ -61,7 +62,7 @@ def search_result_display(attention, notification_id,notification_date,predictio
                             [
                                 html.Div(
                                     [
-                                        search_result_display_dot(attention),
+                                        search_result_display_dot(prediction),
                                     ],
                                     style= {'text-align':'center'}
                                 ),
@@ -166,13 +167,11 @@ layout = [
     ),
 ]
 
-def search_in_dataframe(content,column_name,df):
-    output = []
-    for index,row in df.iterrows():
-        if row[column_name] == content:
-            attention = 'TRUE' if (row['prediction'] == True) else 'FALSE'
-            output.append([attention, row['notification_no'],row['notification_date'],attention,row['cause_code']])
-    return output
+def turn_into_display_list(row,output_display):
+    id_name = list(row['notification_no'])[0:10]
+    id_name = ''.join(id_name)
+    date = row['notification_date'].strftime('%Y-%m-%d')
+    return output_display.extend(search_result_display(id_name,date,row['prediction'],row['cause_code']))
 
 @app.callback(
     Output('display_search_result_block','children'),
@@ -183,24 +182,20 @@ def search_in_dataframe(content,column_name,df):
 
 def update_search_result(n_clicks,input_value,df):
     if(n_clicks > 0):
-        df = pd.read_json(df,orient="split")
-        output = []
-        output = search_in_dataframe(input_value,'notification_no',df)
-        if not output:
-            output = search_in_dataframe(input_value,'contract_acct',df)
-            if not output:
-                output = search_in_dataframe(input_value,'meter_no',df)
+        #df = pd.read_json(df,orient="split")
+        starttime = timeit.default_timer()
+        print("The start time is :",starttime)
+        conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+        engine = sqlalchemy.create_engine(conn_url)
+        df = pd.read_sql_table('notificationlist',con = engine)
+        output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
+     
 
-        if not output:
+        if output.empty:
+            print("The time difference is :", timeit.default_timer() - starttime)
             return search_result_display_none()
         else:
             output_display = []
-            for item in output:
-                id_name = list(item[1])[0:10]
-                id_name = ''.join(id_name)
-                date = item[2].split('T')[0]
-                # print(id_name)
-                # print(item[2])
-                # print(date)
-                output_display.extend(search_result_display(item[0],id_name,date,item[3],item[4]))
+            output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
+            print("The time difference is :", timeit.default_timer() - starttime)
             return output_display

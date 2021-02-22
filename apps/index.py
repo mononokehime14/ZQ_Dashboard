@@ -19,12 +19,12 @@ import timeit
 server = app.server
 
 #following code reads data from local PostgreSQL server (in docker container)
-# conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-# engine = sqlalchemy.create_engine(conn_url)
-# df = pd.read_sql_table('notificationlist',con = engine)
+conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+engine = sqlalchemy.create_engine(conn_url)
+df = pd.read_sql_table('notificationlist',con = engine)
 
 #if no local PostgreSQL, you can read from data folder
-df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True,dtype={'prediction': str})
+#df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True,dtype={'prediction': str})
 
 df['notification_date'] = pd.to_datetime(df['notification_date'])
 
@@ -82,7 +82,7 @@ if ('consecutive_false' not in df.columns):
     # for index,row in df.iterrows():
     #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
 
-    #df.to_sql('notificationlist',con=engine,if_exists='replace')
+    df.to_sql('notificationlist',con=engine,if_exists='replace')
 
 
 app.layout = html.Div(
