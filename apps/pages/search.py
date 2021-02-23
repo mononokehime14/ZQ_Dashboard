@@ -13,6 +13,8 @@ import sqlalchemy
 
 from app import app
 
+display_columns = ['notification_no','notification_date','prediction','cause_code']
+
 def search_bar():
     return html.Div(
         [
@@ -52,60 +54,90 @@ def search_result_display_dot(prediction):
     else:
         return html.Span(className="healthy-search-result-dot",style={'background-color':'#48dcc0'})
 
-def search_result_display(notification_id,notification_date,prediction,cause_code):
-    return [
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        search_result_display_dot(prediction),
-                                    ],
-                                    style= {'text-align':'center'}
-                                ),
-                            ],
-                            className = 'col-sm-2 col-md-2 col-lg-2 u-cell u-pt3',
-                        ),
-                        html.Div(
-                            [
-                                html.P('Notification ID',className = 'h3',style={'color':'#818A91'}),
-                                html.P(notification_id,className = 'h4')
-                            ],
-                            className = 'col-sm-2 push-sm-1 col-md-2 push-md-1 col-lg-2 push-lg-1 u-cell',
-                        ),
-                        html.Div(
-                            [
-                                html.P('Notification date',className = 'h3',style={'color':'#818A91'}),
-                                html.P(notification_date,className = 'h4')
-                            ],
-                            className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
-                        ),
-                        html.Div(
-                            [
-                                html.P('Prediction',className = 'h3',style={'color':'#818A91'}),
-                                html.P(prediction,className = 'h4')
-                            ],
-                            className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
-                        ),
-                        html.Div(
-                            [
-                                html.P('Cause_code',className = 'h3',style={'color':'#818A91'}),
-                                html.P(cause_code,className = 'h4')
-                            ],
-                            className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
-                        ),
-                    ],
-                    className = 'u-grid',
-                    style={'width':'100%'},
-                ),
-            ],
-            className = 'lm--card',
-        )
-    ]
+# def search_result_display(notification_id,notification_date,prediction,cause_code):
+#     return [
+#         html.Div(
+#             [
+#                 html.Div(
+#                     [
+#                         html.Div(
+#                             [
+#                                 html.Div(
+#                                     [
+#                                         search_result_display_dot(prediction),
+#                                     ],
+#                                     style= {'text-align':'center'}
+#                                 ),
+#                             ],
+#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell u-pt3',
+#                         ),
+#                         html.Div(
+#                             [
+#                                 html.P('Notification ID',className = 'h3',style={'color':'#818A91'}),
+#                                 html.P(notification_id,className = 'h4')
+#                             ],
+#                             className = 'col-sm-2 push-sm-1 col-md-2 push-md-1 col-lg-2 push-lg-1 u-cell',
+#                         ),
+#                         html.Div(
+#                             [
+#                                 html.P('Notification date',className = 'h3',style={'color':'#818A91'}),
+#                                 html.P(notification_date,className = 'h4')
+#                             ],
+#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+#                         ),
+#                         html.Div(
+#                             [
+#                                 html.P('Prediction',className = 'h3',style={'color':'#818A91'}),
+#                                 html.P(prediction,className = 'h4')
+#                             ],
+#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+#                         ),
+#                         html.Div(
+#                             [
+#                                 html.P('Cause_code',className = 'h3',style={'color':'#818A91'}),
+#                                 html.P(cause_code,className = 'h4')
+#                             ],
+#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+#                         ),
+#                     ],
+#                     className = 'u-grid',
+#                     style={'width':'100%'},
+#                 ),
+#             ],
+#             className = 'lm--card',
+#         )
+#     ]
 
+def output_table():
+    return dash_table.DataTable(
+        id='output_datatable',
+        columns=[
+            {"name": i, "id": i} for i in display_columns
+        ],
+        filter_action="native",
+        sort_action="native",
+        page_action="native",
+        page_current= 0,
+        page_size= 10,
+        style_data={
+            'width': '25%',
+        },
+        # style_cell_conditional=[
+        #     {
+        #         'if': {'column_id': 'notification_date'},
+        #         'width': '15%'
+        #     },
+        #     {
+        #         'if': {'column_id': 'cause_code'},
+        #         'width': '15%'
+        #     },
+        # ],
+        style_table={
+            'overflowX': 'auto'
+        }
+    )
+
+    
 def search_result_display_none():
     return html.Div(
         [   
@@ -152,7 +184,7 @@ layout = [
                     ),
                     html.Div(
                         [
-                            
+                            output_table(),    
                         ],
                         id = 'display_search_result_block',
                         className = 'u-mv1',
@@ -164,11 +196,11 @@ layout = [
     ),
 ]
 
-def turn_into_display_list(row,output_display):
-    id_name = list(row['notification_no'])[0:10]
-    id_name = ''.join(id_name)
-    date = row['notification_date'].strftime('%Y-%m-%d')
-    return output_display.extend(search_result_display(id_name,date,row['prediction'],row['cause_code']))
+# def turn_into_display_list(row,output_display):
+#     id_name = list(row['notification_no'])[0:10]
+#     id_name = ''.join(id_name)
+#     date = row['notification_date'].strftime('%Y-%m-%d')
+#     return output_display.extend(search_result_display(id_name,date,row['prediction'],row['cause_code']))
 
 # def turn_prediction_to_number(x,false_count):
 #     if x == 'False':
@@ -185,7 +217,7 @@ def turn_into_display_list(row,output_display):
 
 @app.callback(
     [Output('trend_graph_div','children'),
-    Output('display_search_result_block','children')],
+    Output('output_datatable','data')],
     [Input('search_button','n_clicks'),
     Input('search_input_content','value')],
     #State('memory-value','data')
@@ -199,19 +231,20 @@ def update_search_result(n_clicks,input_value):
         conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
         engine = sqlalchemy.create_engine(conn_url)
         df = pd.read_sql_table('notificationlist',con = engine)
-        print(df['prediction'].dtype)
+        df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
-     
+        print("The time difference is :", timeit.default_timer() - starttime)
 
         if output.empty:
-            print("The time difference is :", timeit.default_timer() - starttime)
             return [[],search_result_display_none()]
         else:
-            output_display = []
-            output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
-            print("The time difference is :", timeit.default_timer() - starttime)
+            # output_display = []
+            # output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
             output.sort_values(by = 'notification_date')
-            false_count = 0
+            drop_columns = list(set(output.columns) - set(display_columns))
+            output_display = output.drop(drop_columns,axis=1)
+            output_display['notification_date'] = output_display['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
+            #false_count = 0
             #output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x,false_count))
             x = output['notification_date']
             y = output['consecutive_false']
@@ -259,6 +292,6 @@ def update_search_result(n_clicks,input_value):
                     style = {'width':'100%','height':'200px'},
                 )
             ]
-            return [trend_graph, output_display]
+            return [trend_graph, output_display.to_dict('record')]
     else:
         return [[],[]]

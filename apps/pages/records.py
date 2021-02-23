@@ -268,7 +268,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         df = pd.read_sql_table('notificationlist',con = engine)
         #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
         df['notification_date'] = pd.to_datetime(df['notification_date'])
-        print(df[df['notification_date'] >= dt.datetime(2021,1,8)])
+        df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         start_date = dt.datetime.strptime(date,"%Y-%m-%d")
         if trace_option == 'last week':
             end_date = start_date - dt.timedelta(days=7)
@@ -280,12 +280,10 @@ def update_records(date,n_clicks,trace_option,download_clicks):
             end_date = start_date - dt.timedelta(days=365)
         elif trace_option == 'all time':
             end_date = dt.datetime(2019, 4, 17)
-        print(df[(df['notification_date'] == start_date)])
         # df['meter_contract_no'] = df[['​meter_no', 'contract_acct']].apply(lambda x: ''.join(x), axis=1)
         df['meter_contract_no'] = df['meter_no'] + df['contract_acct']
         combine_list = df[df['notification_date'] == start_date]['meter_contract_no'].tolist()
         dff = df[(df['notification_date'] <= start_date) & (df['notification_date'] >= end_date) & (df['consecutive_false'] != 0) & (df['meter_contract_no'].isin(combine_list))]
-        print(dff.head(10))
         consecutive_false_dic = {}
         dfff = dff.groupby(['meter_no','contract_acct'])
         for index,row in dfff:
@@ -301,7 +299,6 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         for index,row in dff.iterrows():
             df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
         dff = dff[dff['notification_date'] == start_date]
-        print(dff.head(10)) 
         df = df[(df['notification_date'] == start_date) & (df['consecutive_false'] == 0)]
         df = pd.concat([df,dff])           
         drop_columns = list(set(df.columns) - set(display_columns))

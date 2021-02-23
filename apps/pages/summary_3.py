@@ -481,14 +481,26 @@ def draw_consecutive_true_bar(df):
             title='Notifications number',
             titlefont_size=12,
             tickfont_size=10,
-            showgrid = False,
+            tickmode = 'array',
+            tickvals = dff.tolist(),
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
         ),
         xaxis=dict(
             title = 'Consecutive False number',
             titlefont_size=12,
             tickfont_size=10,
-            showgrid= False,
+            tickmode = 'array',
+            tickvals =  dff.index,
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
         ),
+        paper_bgcolor = '#fff',
+        plot_bgcolor = '#fff',
         # legend=dict(
         #     x=0,
         #     y=1.0,
@@ -555,6 +567,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
     df['notification_date'] = pd.to_datetime(df['notification_date'])
+    df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
 
     if (start_date is not None) & (end_date is not None):
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
@@ -570,7 +583,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     low_consumption =  0
     high_consumption = 0
     other_cause = 0
-
     alarm_count =  df.groupby(['prediction']).size().iloc[1]
     df_cause = df.groupby('cause_code').notification_no.nunique()
     cause_code_type = df_cause.index
