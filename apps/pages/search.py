@@ -21,7 +21,7 @@ def search_bar():
                     dcc.Input(
                         id = 'search_input_content',
                         type='text',
-                        placeholder='Search',
+                        placeholder='Please key in notification/account/meter number',
                     ),
                 ],
                 className = 'col-sm-6 col-md-10 col-lg-10 u-cell',
@@ -111,17 +111,12 @@ def search_result_display_none():
         [   
             html.Div(
                 [
-                    html.Div(
-                        [
-                            html.P('Ooops, no results have been found',className = 'h2',style = {'color':'#818A91'})
-                        ],
-                        style={'text-align':'center'}
-                    )
+                    html.P('Ooops, no results have been found',className = 'h2',style = {'color':'#818A91'})
                 ],
-                className = 'u-grid-center',
             ),
         ],
-        className = 'lm--card',
+        className = 'lm--card u-grid-center',
+        style = {'text-align':'center'},
     )
 
 layout = [
@@ -133,14 +128,6 @@ layout = [
                 [
                     html.Div(
                         [
-                            html.Div(
-                                [
-                                    html.Div(html.P('Please key in notification/account/meter number', className="h4",style={'color':'#4F5A60'})),                    
-                                ],
-                                id='search_title',
-                                className="lm--card-item u-grid-center",
-                                style={"height": "100%"},
-                            ),
                             html.Div(
                                 [
                                     search_bar()
@@ -161,6 +148,7 @@ layout = [
                         ],
                         id = 'display_search_result_trend_block',
                         className = 'u-mv1',
+                        #style = {'height':'100px'},
                     ),
                     html.Div(
                         [
@@ -182,8 +170,18 @@ def turn_into_display_list(row,output_display):
     date = row['notification_date'].strftime('%Y-%m-%d')
     return output_display.extend(search_result_display(id_name,date,row['prediction'],row['cause_code']))
 
-def turn_prediction_to_number(x):
-    return 1 if x == 'False' else -1
+# def turn_prediction_to_number(x,false_count):
+#     if x == 'False':
+#         false_count += 1
+#         print('xijia1')
+#     else:
+#         if false_count > 0:
+#             false_count = 0
+#             print('qusi')
+#         else:
+#             false_count -= 1
+#             print('shangjian1')
+#     return false_count
 
 @app.callback(
     [Output('trend_graph_div','children'),
@@ -201,6 +199,7 @@ def update_search_result(n_clicks,input_value):
         conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
         engine = sqlalchemy.create_engine(conn_url)
         df = pd.read_sql_table('notificationlist',con = engine)
+        print(df['prediction'].dtype)
         output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
      
 
@@ -211,12 +210,11 @@ def update_search_result(n_clicks,input_value):
             output_display = []
             output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
             print("The time difference is :", timeit.default_timer() - starttime)
-            #output.sort_values(by = 'notification_date')
-            output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x))
+            output.sort_values(by = 'notification_date')
+            false_count = 0
+            #output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x,false_count))
             x = output['notification_date']
-            y = output['prediction_in_number']
-            print(y.unique())
-            print(x.sort_values(ascending = True))
+            y = output['consecutive_false']
             fig = go.Figure()
             fig.add_trace(
                 go.Scatter(
@@ -226,32 +224,39 @@ def update_search_result(n_clicks,input_value):
                     line_shape = 'vh',
                 )
             )
-            fig.add_trace(
-                go.Scatter(
-                    x = x,
-                    y = [0] * (y.size),
-                    name = 'linear',
-                    line_color = 'red',
-                )
-            )
             fig.update_traces(
                 mode = 'lines+markers',
             )
             fig.update_layout(
+                margin = dict(t=10,r=5,l=5,b=10),
                 yaxis = dict(
                     tickmode = 'array',
-                    tickvals = y.unique()
+                    tickvals = y.unique(),
+                    zeroline = True,
+                    showgrid =  False,
+                    showline = True,
+                    linecolor = '#4F5A60',
+                    title_text = 'Prediction',
                 ),
                 xaxis = dict(
                     tickmode = 'array',
-                    tickvals = x.sort_values(ascending = True)
-                )
+                    tickvals = x,
+                    showgrid = False,
+                    showspikes = True,
+                    showline = True,
+                    linecolor = '#4F5A60',
+                    title_text = 'Time',
+                ),
+                paper_bgcolor = '#fff',
+                plot_bgcolor = '#fff',
             )
             trend_graph = [
                 dcc.Graph(
                     id = 'trend_graph_plot',
                     figure = fig,
-                    style = {'width':'100%'},
+                    config={'displayModeBar': False,
+                            'responsive': True},
+                    style = {'width':'100%','height':'200px'},
                 )
             ]
             return [trend_graph, output_display]

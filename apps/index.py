@@ -38,8 +38,9 @@ def find_consecutive_false(group):
                 false_count += 1
             elif row2['prediction'] == 'TRUE':
                 false_count = 0
-        for i in group['notification_no']:
-            consecutive_false_dic[i] = false_count
+            consecutive_false_dic[row2['notification_no']] = false_count
+        # for i in group['notification_no']:
+        #     consecutive_false_dic[i] = false_count
     else:
         for i in group['notification_no']:
             consecutive_false_dic[i] = 0
@@ -65,7 +66,7 @@ if ('consecutive_false' not in df.columns):
     # for index,row in df.iterrows():
     #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
     # df['consecutive_false'] = df.groupby(['notification_no'])['notification_no'].transform(lambda x: update_consecutive_false(x))
-    df['consecutive_false']= df.apply(lambda x: consecutive_false_dic[x['notification_no']], axis=1)
+    df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
     print("The time difference is :", timeit.default_timer() - starttime)
 
     #dff = df.groupby(['meter_no','contract_acct'])
@@ -87,7 +88,7 @@ if ('consecutive_false' not in df.columns):
 
 app.layout = html.Div(
     [
-        dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
+        #dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
 
         # represents the URL bar, doesn't render anything
         dcc.Location(id='url', refresh=False),

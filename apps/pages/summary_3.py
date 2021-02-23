@@ -11,6 +11,7 @@ import io
 import urllib.parse
 import base64
 import json
+import sqlalchemy
 
 from app import app
 from settings import MAPBOX_ACCESS_TOKEN
@@ -480,11 +481,13 @@ def draw_consecutive_true_bar(df):
             title='Notifications number',
             titlefont_size=12,
             tickfont_size=10,
+            showgrid = False,
         ),
         xaxis=dict(
             title = 'Consecutive False number',
             titlefont_size=12,
             tickfont_size=10,
+            showgrid= False,
         ),
         # legend=dict(
         #     x=0,
@@ -536,15 +539,29 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
         Output('latest_value','children'),
     ],
     [
-        Input('intermediate-value','data'),
+        Input('date-picker-range','start_date'),
+        Input('date-picker-range','end_date'),
         Input('meter_cause_button','n_clicks'),
         Input('low_consumption_button','n_clicks'),
         Input('high_consumption_button','n_clicks'),
         Input('other_cause_button','n_clicks'),
     ])
 
-def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
-    df = pd.read_json(df, orient="split")
+def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
+    #df = pd.read_json(df, orient="split")
+    conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+    engine = sqlalchemy.create_engine(conn_url)
+    df = pd.read_sql_table('notificationlist',con = engine)
+
+    #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
+    df['notification_date'] = pd.to_datetime(df['notification_date'])
+
+    if (start_date is not None) & (end_date is not None):
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        if(start_date < end_date):
+            df = df[df['notification_date'] > start_date]
+            df = df[df['notification_date'] < end_date]
 
     output = []
 
@@ -622,7 +639,7 @@ def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,
     if(more_than_2 == 0):
         latest = 'None'
     else:
-        df_for_bar['notification_date'] = pd.to_datetime(df_for_bar['notification_date'])
+        #df_for_bar['notification_date'] = pd.to_datetime(df_for_bar['notification_date'])
         df_for_bar.sort_values(by = 'notification_date')
         latest = df_for_bar.tail(1)['notification_date'].dt.strftime('%Y-%m-%d')
     output.append(latest)
@@ -630,41 +647,27 @@ def substation_health_charts_callback(df,meter_n_clicks,lc_n_clicks,hc_n_clicks,
 
 
 #this callback uses date picker range to filte data
-@app.callback(
-    Output('intermediate-value', 'data'),
-    [Input('date-picker-range','start_date'),
-    Input('date-picker-range','end_date')],
-    State('memory-value','data')
-)
+# @app.callback(
+#     Output('intermediate-value', 'data'),
+#     [Input('date-picker-range','start_date'),
+#     Input('date-picker-range','end_date')],
+#     #State('memory-value','data')
+# )
 
-def update_date_range(start_date,end_date,df):
-    df = pd.read_json(df, orient="split")
+# def update_date_range(start_date,end_date):
+#     #df = pd.read_json(df, orient="split")
+#     conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+#     engine = sqlalchemy.create_engine(conn_url)
+#     df = pd.read_sql_table('notificationlist',con = engine)
 
-    df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
-    df['notification_date'] = pd.to_datetime(df['notification_date'])
+#     #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
+#     df['notification_date'] = pd.to_datetime(df['notification_date'])
 
-    if (start_date is not None) & (end_date is not None):
-        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
-        if(start_date < end_date):
-            df = df[df['notification_date'] > start_date]
-        # if (end_date is not None):
-            df = df[df['notification_date'] < end_date]
+#     if (start_date is not None) & (end_date is not None):
+#         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+#         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+#         if(start_date < end_date):
+#             df = df[df['notification_date'] > start_date]
+#             df = df[df['notification_date'] < end_date]
 
-    #following code is moved to index page, to do it just once
-    # df['consecutive_false'] = 0
-    # consecutive_false_dic = {}
-    # dff = df.groupby(['meter_no','contract_acct'])
-    # for index,row in dff:
-    #     row.sort_values(by = 'notification_date')
-    #     false_count = 0
-    #     for index,row2 in row.iterrows():
-    #         if row2['prediction'] == False:
-    #             false_count += 1
-    #         elif row2['prediction'] == True:
-    #             false_count = 0
-    #     for i in row['notification_no']:
-    #         consecutive_false_dic[i] = false_count
-    # for index,row in df.iterrows():
-    #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
-    return df.to_json(orient='split',date_format='iso')
+#     return df.to_json(orient='split',date_format='iso')
