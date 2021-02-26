@@ -11,6 +11,10 @@ import datetime
 import timeit
 import sqlalchemy
 
+import sys
+sys.path.append("..")
+from data_manager import DBmanager,Cell
+
 from app import app
 
 display_columns = ['notification_no','notification_date','prediction','cause_code']
@@ -114,7 +118,6 @@ def output_table():
         columns=[
             {"name": i, "id": i} for i in display_columns
         ],
-        filter_action="native",
         sort_action="native",
         page_action="native",
         page_current= 0,
@@ -228,10 +231,16 @@ def update_search_result(n_clicks,input_value):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
         print("The start time is :",starttime)
-        conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-        engine = sqlalchemy.create_engine(conn_url)
+        # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+        # engine = sqlalchemy.create_engine(conn_url)
+        DB = DBmanager()
+        engine = DB.engine
+        #DB.test_add_multiple()
+        DB.update_consecutive_false()
+
         df = pd.read_sql_table('notificationlist',con = engine)
         df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+        print(df[df['notification_no'] == 'qwer']['consecutive_false'])
         output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
         print("The time difference is :", timeit.default_timer() - starttime)
 
@@ -254,7 +263,7 @@ def update_search_result(n_clicks,input_value):
                     x = x,
                     y = y,
                     name = 'linear',
-                    line_shape = 'vh',
+                    line_shape = 'hvh',
                 )
             )
             fig.update_traces(

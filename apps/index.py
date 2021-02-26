@@ -27,15 +27,16 @@ df = pd.read_sql_table('notificationlist',con = engine)
 #df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True,dtype={'prediction': str})
 
 df['notification_date'] = pd.to_datetime(df['notification_date'])
+df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
 
 def find_consecutive_false(group):
     if(len(group) > 1):
         group.sort_values(by = 'notification_date')
         false_count = 0
         for index,row2 in group.iterrows():
-            if row2['prediction'] == 'FALSE':
+            if row2['prediction'] == 'False':
                 false_count += 1
-            elif row2['prediction'] == 'TRUE':
+            elif row2['prediction'] == 'True':
                 false_count = 0
             consecutive_false_dic[row2['notification_no']] = false_count
     else:

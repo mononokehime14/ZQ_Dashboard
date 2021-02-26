@@ -24,7 +24,6 @@ def draw_datatable():
                     {"name": i, "id": i, "deletable": True, "selectable": True} for i in display_columns
                 ],
                 editable=True,
-                filter_action="native",
                 sort_action="native",
                 sort_mode="multi",
                 column_selectable="single",
@@ -302,12 +301,12 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         df = df[(df['notification_date'] == start_date) & (df['consecutive_false'] == 0)]
         df = pd.concat([df,dff])           
         drop_columns = list(set(df.columns) - set(display_columns))
-        df.drop(drop_columns,axis=1)
+        df.drop(drop_columns,axis=1,inplace= True)
         true_count = len(df[df['prediction'] == 'True'].index)
         false_count = len(df.index) - true_count            
         label = f'You have chosen date: {date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):
-            return [None,label,None,'There is no records on that day','',"dayily_records.csv"]
+            return [None,label,None,'There is no records on that day',None,"dayily_records.csv"]
         rate = int((true_count / (true_count + false_count)) * 100)
         fig = generate_little_chart(true_count,false_count)
         chart_content = [dcc.Graph(
@@ -316,11 +315,13 @@ def update_records(date,n_clicks,trace_option,download_clicks):
                     'responsive': True},
             style={'width': '48px','height':'48px'},
         )]
-        if download_clicks > 0:
+        if (download_clicks > 0) & (not df.empty):
+            #df.drop('meter_contract_no',axis = 1,inplace =True)
+            print(df.columns)
             csv_string = df.to_csv(index=False, encoding='utf-8')
             csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
         else:
-            csv_string = ''
+            csv_string = None
         return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string,f'{date}-records.csv']
-    return [None,'Select a date to check its records',None,'','',"dayily_records.csv"]
+    return [None,'Select a date to check its records',None,None,None,"dayily_records.csv"]
 
