@@ -273,7 +273,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
     if(n_clicks>0) & (date is not None):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
-        print("The start time is :",starttime)
+        print("Updating tracing records, time is :",starttime)
         # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
         # engine = sqlalchemy.create_engine(conn_url)
         # df = pd.read_sql_table('notificationlist',con = engine)
@@ -332,7 +332,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         )]
         csv_string = df.to_csv(index=False, encoding='utf-8')
         csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
-        print("The time difference is :", timeit.default_timer() - starttime)
+        print("All things acomplished, used time:", timeit.default_timer() - starttime)
         #df.to_json(orient='split',date_format='iso')
         return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string]
     return [None,'Select a date to check its records',None,'','']

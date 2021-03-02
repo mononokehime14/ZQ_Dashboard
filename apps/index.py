@@ -18,20 +18,16 @@ import timeit
 
 server = app.server
 
-#following code reads data from local PostgreSQL server (in docker container)
 # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
 # engine = sqlalchemy.create_engine(conn_url)
 # df = pd.read_sql_table('notificationlist',con = engine)
-
-#if no local PostgreSQL, you can read from data folder
-#df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True,dtype={'prediction': str})
 
 # df['notification_date'] = pd.to_datetime(df['notification_date'])
 # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
 
 # def find_consecutive_false(group):
 #     if(len(group) > 1):
-#         group.sort_values(by = 'notification_date')
+#         group = group.sort_values(by = 'notification_date',ascending = True)
 #         false_count = 0
 #         for index,row2 in group.iterrows():
 #             if row2['prediction'] == 'False':
@@ -44,8 +40,10 @@ server = app.server
 #             consecutive_false_dic[i] = 0
 #     return 0
 
-#if first time dealing with this data, process & add consecutive false column
-# if ('consecutive_false' not in df.columns):
+# exist = df['consecutive_false'].unique()
+# print(exist)
+# if exist[0] is None:
+#     print('kaishi gengixng')
 #     consecutive_false_dic = {}
 #     starttime = timeit.default_timer()
 #     print("The start time is :",starttime)
@@ -59,6 +57,8 @@ server = app.server
     
 #     if not df.empty:
 #         df.to_sql('notificationlist',con=engine,if_exists='replace')
+
+#     print("The time difference is :", timeit.default_timer() - starttime)
 
 
 app.layout = html.Div(

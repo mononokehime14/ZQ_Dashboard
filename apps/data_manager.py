@@ -5,11 +5,13 @@ from sqlalchemy.orm import sessionmaker,Query
 from sqlalchemy.types import Integer,String,Text,DateTime
 from sqlalchemy.ext.declarative import declarative_base
 import datetime as dt
+import timeit
 
 conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
 engine = create_engine(conn_url)
 
 Base = declarative_base()
+consecutive_false_dic = {}
 
 class Cell(Base):
     __tablename__ = 'notificationlist'
@@ -27,9 +29,9 @@ class Cell(Base):
     # def __repr__(self):
     #     return "type:{self.type},no:{self.number}, date:{self.date},contract:{self.contract_acct},cause_code:{self.cause_code},meter:{self.meter_no},prediction:{self.prediction},consecutive_false:{self.consecutive_false}"
 
-def find_consecutive_false(group,consecutive_false_dic):
+def find_consecutive_false(group):
     if(len(group) > 1):
-        #group.sort_values(by = 'notification_date',,ascending=True)
+        group = group.sort_values(by = 'notification_date',ascending=True)
         false_count = 0
         for index,row2 in group.iterrows():
             if row2['prediction'] == 'False':
@@ -40,7 +42,7 @@ def find_consecutive_false(group,consecutive_false_dic):
     else:
         for i in group['notification_no']:
             consecutive_false_dic[i] = 0
-    return consecutive_false_dic
+    return 0
 
 class DBmanager:
     #conn = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
@@ -74,41 +76,67 @@ class DBmanager:
     
     def update_consecutive_false(self):
         session = self.session
-        try:
+        starttime = timeit.default_timer()
+        exists = session.query(Cell.consecutive_false).first()
+        if exists[0] is not None:
             #new_data = session.query(Cell).filter(Cell.consecutive_false == None).all()
             df_nan_in_cf = pd.read_sql(session.query(Cell).filter(Cell.consecutive_false == None).statement, session.bind)
-            acct_list = pd.concat([df_nan_in_cf['meter_no'], df_nan_in_cf['contract_acct']])
-            acct_list = acct_list.tolist()
-            #no_list = df_nan_in_cf['notification_no'].tolist()
-            df = pd.read_sql(session.query(Cell).filter(or_(Cell.meter_no.in_(acct_list),Cell.contract_acct.in_(acct_list))).statement, session.bind)
+            print("Getting target list, used time:", timeit.default_timer() - starttime)
+            if not df_nan_in_cf.empty:
+                acct_list = pd.concat([df_nan_in_cf['meter_no'], df_nan_in_cf['contract_acct']])
+                acct_list = acct_list.tolist()
+                #no_list = df_nan_in_cf['notification_no'].tolist()
+                df = pd.read_sql(session.query(Cell).filter(or_(Cell.meter_no.in_(acct_list),Cell.contract_acct.in_(acct_list))).statement, session.bind)
+                print("Loading done, used time:", timeit.default_timer() - starttime)
+                df['notification_date'] = pd.to_datetime(df['notification_date'])
+                df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+                # df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
+                consecutive_false_dic.clear()
+                df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
+                print("Calculation done, used time:", timeit.default_timer() - starttime)
+                try:
+                    for key,value in consecutive_false_dic.items():
+                        user = session.query(Cell).filter(Cell.notification_no == key).update({"consecutive_false":value})
+                        session.commit()
+                except:
+                    session.rollback()
+                    print("We encouter unknown situation, We need help!")
+                    raise
+                finally:
+                    session.close()
+                print("Uploading done, used time:", timeit.default_timer() - starttime)
+        else:
+            print("Method 2")
+            consecutive_false_dic.clear()
+            df = pd.read_sql_table('notificationlist',con = self.engine)
+            df['notification_date'] = pd.to_datetime(df['notification_date'])
+            print(df['notification_date'].head(5))
             df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-            consecutive_false_dic = {}
-            #df['notification_date'] = df['notification_date'].dt.to_pydatetime()
-            #df['notification_date'] = pd.to_datetime(df['notification_date'])
-            df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
-            df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x,consecutive_false_dic))
-            # for i in new_data:
-            #     temp = consecutive_false_dic[i.notification_no]
-            #     print(temp)
-            #     i.consecutive_false = temp
-            
-            #session.commit()
-            #     session.commit()
-            
-            #session.query(Cell).filter(Cell.consecutive_false == None).update(consecutive_false_dic,synchronize_session=False)
-            for key,value in consecutive_false_dic.items():
-                user = session.query(Cell).filter(Cell.notification_no == key).update({"consecutive_false":value})
-                session.commit()
-                #setattr(user,key,value)
+            print("Loading target list done, used time:", timeit.default_timer() - starttime)
+            #df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
+            #print("Sorting done, used time:", timeit.default_timer() - starttime)
+            df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
+            print("Calculation done, used time:", timeit.default_timer() - starttime)
+            df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
+            print("df ready, used time:", timeit.default_timer() - starttime)
+            try:
+                for key,value in consecutive_false_dic.items():
+                    user = session.query(Cell).filter(Cell.notification_no == key).update({"consecutive_false":value})
+                    session.commit()
+            except:
+                session.rollback()
+                print("We encouter unknown situation, We need help!")
+                raise
+            finally:
+                session.close()
+            print("Uploading done, used time:", timeit.default_timer() - starttime)
+            # if not df.empty:
+            #     df.to_sql('notificationlist',con=self.engine,if_exists='replace')
+            # print("Uploading done, used time:", timeit.default_timer() - starttime)
             
             # session.commit()
             # df_check = pd.read_sql(session.query(Cell).filter(Cell.meter_no == 'qwer').statement, session.bind)
             # print(df_check)
-        except:
-            session.rollback()
-            raise
-        finally:
-            session.close()
         return 0
     
     def query(self,input_text):
@@ -124,11 +152,11 @@ class DBmanager:
         acct_list = acct_list.tolist()
         df= pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date <= start_date, Cell.notification_date >= end_date,Cell.consecutive_false > 0,(Cell.meter_no.in_(acct_list) | Cell.contract_acct.in_(acct_list)))).statement, session.bind)
         df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-        consecutive_false_dic = {}
+        consecutive_false_dic.clear()
         #df['notification_date'] = df['notification_date'].dt.to_pydatetime()
         #df['notification_date'] = pd.to_datetime(df['notification_date'])
         df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
-        df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x,consecutive_false_dic))
+        df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
         df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
         df = df[df['notification_date'] == start_date]
         df_sup = pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date == start_date, Cell.consecutive_false == 0)).statement,session.bind)
@@ -147,6 +175,18 @@ class DBmanager:
         df = pd.read_sql_table('notificationlist',con = self.engine)
         df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         return df
+
+    def start_over(self):
+        session = self.session
+        try:
+            session.query(Cell).update({'consecutive_false':None})
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+        return 0
 
         
 

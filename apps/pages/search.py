@@ -219,25 +219,24 @@ layout = [
 def update_search_result(n_clicks,input_value):
     if(n_clicks > 0):
         #df = pd.read_json(df,orient="split")
-        starttime = timeit.default_timer()
-        print("The start time is :",starttime)
         DB = DBmanager()
         #engine = DB.engine
         #DB.test_add_multiple()
+        DB.start_over()
         DB.update_consecutive_false()
 
         #df = pd.read_sql_table('notificationlist',con = engine)
         #df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         #output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
         output = DB.query(input_value)
-        print("The time difference is :", timeit.default_timer() - starttime)
+
 
         if output.empty:
             return [[],search_result_display_none()]
         else:
             # output_display = []
             # output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
-            output.sort_values(by = 'notification_date')
+            output.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
             drop_columns = list(set(output.columns) - set(display_columns))
             output_display = output.drop(drop_columns,axis=1)
             output_display['notification_date'] = output_display['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))

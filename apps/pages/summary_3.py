@@ -262,20 +262,20 @@ def manipulation_bar():
             #     className = 'u-pv2',
             #     style={'height':'100%','display':'block'}
             # ),
-            html.Div(
-                [
-                    html.Button(
-                        [
-                            html.P('Save Changes',className = 'h4'),
-                        ],
-                        id = 'save_change_button',
-                        className='lm--button--primary',
-                    ),
-                ],
-                # className = 'u-grid u-grid-center@md u-grid-center@sm u-pv2',
-                className = 'u-pv2',
-                style={'height':'100%','display':'block'}
-            ),
+            # html.Div(
+            #     [
+            #         html.Button(
+            #             [
+            #                 html.P('Save Changes',className = 'h4'),
+            #             ],
+            #             id = 'save_change_button',
+            #             className='lm--button--primary',
+            #         ),
+            #     ],
+            #     # className = 'u-grid u-grid-center@md u-grid-center@sm u-pv2',
+            #     className = 'u-pv2',
+            #     style={'height':'100%','display':'block'}
+            # ),
 
         ],
         className = 'lm--card',
