@@ -3,15 +3,22 @@ import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State, ClientsideFunction
-from urllib.parse import urlparse, parse_qs
 import pandas as pd
 from pathlib import Path
 import math
 import datetime as dt
 import urllib.parse
 import sqlalchemy
+import timeit
 
+from data_manager import DBmanager,Cell
 from app import app
+
+df_1 = pd.DataFrame({
+    'a': [1, 2, 3, 4],
+    'b': [2, 1, 5, 6],
+    'c': ['x', 'x', 'y', 'y']
+})
 
 display_columns = ['notification_no','notification_date','contract_acct','cause_code','meter_no','prediction','consecutive_false']
 
@@ -186,6 +193,7 @@ def draw_upper_block():
 layout = [
     html.Div(
         [
+            dcc.Store(id="temp_for_download",storage_type='local'),
             # Main Content
             html.Div(
                 [
@@ -249,8 +257,10 @@ def generate_little_chart(true_count, false_count):
     Output('little_chart','children'),
     Output('little_chart_label','children'),
     
+    #Output('temp_for_download','data')
     Output('download-link', 'href'),
-    Output('download-link', 'download')],
+    ],
+
     [Input('date_selector_single','date'),
     Input('date_selector_button','n_clicks'),
     Input('consecutive_false_trace','value'),
@@ -262,12 +272,14 @@ def generate_little_chart(true_count, false_count):
 def update_records(date,n_clicks,trace_option,download_clicks):
     if(n_clicks>0) & (date is not None):
         #df = pd.read_json(df,orient="split")
-        conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-        engine = sqlalchemy.create_engine(conn_url)
-        df = pd.read_sql_table('notificationlist',con = engine)
-        #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
-        df['notification_date'] = pd.to_datetime(df['notification_date'])
-        df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+        starttime = timeit.default_timer()
+        print("The start time is :",starttime)
+        # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+        # engine = sqlalchemy.create_engine(conn_url)
+        # df = pd.read_sql_table('notificationlist',con = engine)
+
+        # df['notification_date'] = pd.to_datetime(df['notification_date'])
+        # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         start_date = dt.datetime.strptime(date,"%Y-%m-%d")
         if trace_option == 'last week':
             end_date = start_date - dt.timedelta(days=7)
@@ -279,34 +291,37 @@ def update_records(date,n_clicks,trace_option,download_clicks):
             end_date = start_date - dt.timedelta(days=365)
         elif trace_option == 'all time':
             end_date = dt.datetime(2019, 4, 17)
-        # df['meter_contract_no'] = df[['​meter_no', 'contract_acct']].apply(lambda x: ''.join(x), axis=1)
-        df['meter_contract_no'] = df['meter_no'] + df['contract_acct']
-        combine_list = df[df['notification_date'] == start_date]['meter_contract_no'].tolist()
-        dff = df[(df['notification_date'] <= start_date) & (df['notification_date'] >= end_date) & (df['consecutive_false'] != 0) & (df['meter_contract_no'].isin(combine_list))]
-        consecutive_false_dic = {}
-        dfff = dff.groupby(['meter_no','contract_acct'])
-        for index,row in dfff:
-            row.sort_values(by = 'notification_date')
-            false_count = 0
-            for index,row2 in row.iterrows():
-                if row2['prediction'] == 'False':
-                    false_count += 1
-                elif row2['prediction'] == 'True':
-                    false_count = 0
-            for i in row['notification_no']:
-                consecutive_false_dic[i] = false_count
-        for index,row in dff.iterrows():
-            df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
-        dff = dff[dff['notification_date'] == start_date]
-        df = df[(df['notification_date'] == start_date) & (df['consecutive_false'] == 0)]
-        df = pd.concat([df,dff])           
+
+        # df['meter_contract_no'] = df['meter_no'] + df['contract_acct']
+        # combine_list = df[df['notification_date'] == start_date]['meter_contract_no'].tolist()
+        # dff = df[(df['notification_date'] <= start_date) & (df['notification_date'] >= end_date) & (df['consecutive_false'] != 0) & (df['meter_contract_no'].isin(combine_list))]
+        # consecutive_false_dic = {}
+        # dfff = dff.groupby(['meter_no','contract_acct'])
+        # for index,row in dfff:
+        #     row.sort_values(by = 'notification_date')
+        #     false_count = 0
+        #     for index,row2 in row.iterrows():
+        #         if row2['prediction'] == 'False':
+        #             false_count += 1
+        #         elif row2['prediction'] == 'True':
+        #             false_count = 0
+        #     for i in row['notification_no']:
+        #         consecutive_false_dic[i] = false_count
+        # for index,row in dff.iterrows():
+        #     df.loc[index,'consecutive_false'] = consecutive_false_dic[row['notification_no']]
+        # dff = dff[dff['notification_date'] == start_date]
+        # df = df[(df['notification_date'] == start_date) & (df['consecutive_false'] == 0)]
+        # df = pd.concat([df,dff])     
+        DB = DBmanager()
+        DB.update_consecutive_false()
+        df = DB.trace_records(start_date,end_date)    
         drop_columns = list(set(df.columns) - set(display_columns))
         df.drop(drop_columns,axis=1,inplace= True)
         true_count = len(df[df['prediction'] == 'True'].index)
         false_count = len(df.index) - true_count            
         label = f'You have chosen date: {date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):
-            return [None,label,None,'There is no records on that day',None,"dayily_records.csv"]
+            return [None,label,None,'There is no records on that day','']
         rate = int((true_count / (true_count + false_count)) * 100)
         fig = generate_little_chart(true_count,false_count)
         chart_content = [dcc.Graph(
@@ -315,13 +330,44 @@ def update_records(date,n_clicks,trace_option,download_clicks):
                     'responsive': True},
             style={'width': '48px','height':'48px'},
         )]
-        if (download_clicks > 0) & (not df.empty):
-            #df.drop('meter_contract_no',axis = 1,inplace =True)
-            print(df.columns)
-            csv_string = df.to_csv(index=False, encoding='utf-8')
-            csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
-        else:
-            csv_string = None
-        return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string,f'{date}-records.csv']
-    return [None,'Select a date to check its records',None,None,None,"dayily_records.csv"]
+        csv_string = df.to_csv(index=False, encoding='utf-8')
+        csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+        print("The time difference is :", timeit.default_timer() - starttime)
+        #df.to_json(orient='split',date_format='iso')
+        return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string]
+    return [None,'Select a date to check its records',None,'','']
 
+# @app.callback(
+#     Output('download-link', 'href'),
+#     Input('csv_download_button','n_clicks'),
+#     State('temp_for_download','data')
+# )
+
+# def try_update(n_clicks,df):
+#     #df = pd.read_json(df, orient="split")
+#     #print(df.head(5))
+#     if (df is not None) & (n_clicks > 0):
+#         print('chenggong')
+#         df = pd.read_json(df, orient="split")
+#         #df['notification_date'] = df['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
+#         csv_string = df.to_csv(index=False, encoding='utf-8')
+#         csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+#         print(csv_string)
+#         return csv_string
+
+# @app.callback(
+#     Output('download-link', 'href'),
+#     Input('csv_download_button','n_clicks'),
+#     State('temp_for_download','data')
+# )
+
+# def suibian(n_clicks,df):
+#     DB = DBmanager()
+#     if df is None:
+#         df = DB.query('qwer')
+#     else:
+#         df = pd.DataFrame(columns = display_columns)
+#     csv_string = df.to_csv(index=False, encoding='utf-8')
+#     csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+#     return csv_string
+    

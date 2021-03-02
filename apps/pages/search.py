@@ -125,16 +125,6 @@ def output_table():
         style_data={
             'width': '25%',
         },
-        # style_cell_conditional=[
-        #     {
-        #         'if': {'column_id': 'notification_date'},
-        #         'width': '15%'
-        #     },
-        #     {
-        #         'if': {'column_id': 'cause_code'},
-        #         'width': '15%'
-        #     },
-        # ],
         style_table={
             'overflowX': 'auto'
         }
@@ -231,17 +221,15 @@ def update_search_result(n_clicks,input_value):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
         print("The start time is :",starttime)
-        # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-        # engine = sqlalchemy.create_engine(conn_url)
         DB = DBmanager()
-        engine = DB.engine
+        #engine = DB.engine
         #DB.test_add_multiple()
         DB.update_consecutive_false()
 
-        df = pd.read_sql_table('notificationlist',con = engine)
-        df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-        print(df[df['notification_no'] == 'qwer']['consecutive_false'])
-        output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
+        #df = pd.read_sql_table('notificationlist',con = engine)
+        #df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+        #output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
+        output = DB.query(input_value)
         print("The time difference is :", timeit.default_timer() - starttime)
 
         if output.empty:

@@ -13,6 +13,7 @@ import base64
 import json
 import sqlalchemy
 
+from data_manager import DBmanager,Cell
 from app import app
 from settings import MAPBOX_ACCESS_TOKEN
 
@@ -560,21 +561,26 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
     ])
 
 def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
-    #df = pd.read_json(df, orient="split")
-    conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-    engine = sqlalchemy.create_engine(conn_url)
-    df = pd.read_sql_table('notificationlist',con = engine)
+    # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+    # engine = sqlalchemy.create_engine(conn_url)
+    # df = pd.read_sql_table('notificationlist',con = engine)
 
-    #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
-    df['notification_date'] = pd.to_datetime(df['notification_date'])
-    df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+    # df['notification_date'] = pd.to_datetime(df['notification_date'])
+    # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+    DB = DBmanager()
+    DB.update_consecutive_false()
 
     if (start_date is not None) & (end_date is not None):
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
         if(start_date < end_date):
-            df = df[df['notification_date'] > start_date]
-            df = df[df['notification_date'] < end_date]
+            df = DB.query_in_timeperiod(start_date,end_date)
+            # df = df[df['notification_date'] > start_date]
+            # df = df[df['notification_date'] < end_date]
+        else:
+            df = DB.fetch_all()
+    else:
+        df = DB.fetch_all()
 
     output = []
 
