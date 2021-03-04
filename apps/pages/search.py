@@ -53,7 +53,7 @@ def search_bar():
     )
 
 def search_result_display_dot(prediction):
-    if prediction == 'True':        
+    if prediction == True:        
         return html.Span(className="healthy-search-result-dot",style={'background-color':'#e54545'})
     else:
         return html.Span(className="healthy-search-result-dot",style={'background-color':'#48dcc0'})

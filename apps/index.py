@@ -18,12 +18,16 @@ import timeit
 
 server = app.server
 
+#DB = DBmanager()
+# DB.start_over()
+#DB.update_consecutive_false_for_whole()
 # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
 # engine = sqlalchemy.create_engine(conn_url)
 # df = pd.read_sql_table('notificationlist',con = engine)
 
+# df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True)
 # df['notification_date'] = pd.to_datetime(df['notification_date'])
-# df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+# #df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
 
 # def find_consecutive_false(group):
 #     if(len(group) > 1):
@@ -40,26 +44,24 @@ server = app.server
 #             consecutive_false_dic[i] = 0
 #     return 0
 
-# exist = df['consecutive_false'].unique()
-# print(exist)
-# if exist[0] is None:
+# if 'consecutive_false' not in df.columns:
 #     print('kaishi gengixng')
 #     consecutive_false_dic = {}
 #     starttime = timeit.default_timer()
 #     print("The start time is :",starttime)
-#     dff = df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
+#     df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
 #     print("The time difference is :", timeit.default_timer() - starttime)
 
 #     starttime = timeit.default_timer()
 #     print("The start time is :",starttime)
 #     df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
 #     print("The time difference is :", timeit.default_timer() - starttime)
-    
-#     if not df.empty:
-#         df.to_sql('notificationlist',con=engine,if_exists='replace')
+#     df['notification_date'] = df['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
+#     #df.to_sql('notificationlist',con=engine,if_exists='replace')
 
 #     print("The time difference is :", timeit.default_timer() - starttime)
 
+# print(df['prediction'].unique())
 
 app.layout = html.Div(
     [

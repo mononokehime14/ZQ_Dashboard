@@ -568,7 +568,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # df['notification_date'] = pd.to_datetime(df['notification_date'])
     # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
     DB = DBmanager()
-    DB.update_consecutive_false()
+    DB.update_consecutive_false_for_whole()
 
     if (start_date is not None) & (end_date is not None):
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
@@ -589,8 +589,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     low_consumption =  0
     high_consumption = 0
     other_cause = 0
-    alarm_count =  df.groupby(['prediction']).size().iloc[1]
-    df_cause = df.groupby('cause_code').notification_no.nunique()
+    alarm_count =  DB.count_false()
+    df_cause = 0 if df.empty else df.groupby('cause_code').notification_no.nunique()
     cause_code_type = df_cause.index
 
     for i in range(len(cause_code_type)):

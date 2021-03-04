@@ -312,7 +312,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         df = DB.trace_records(start_date,end_date)    
         drop_columns = list(set(df.columns) - set(display_columns))
         df.drop(drop_columns,axis=1,inplace= True)
-        true_count = len(df[df['prediction'] == 'True'].index)
+        true_count = len(df[df['prediction'] == True].index)
         false_count = len(df.index) - true_count            
         label = f'You have chosen date: {date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):
