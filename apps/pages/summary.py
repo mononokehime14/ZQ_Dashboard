@@ -568,7 +568,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # df['notification_date'] = pd.to_datetime(df['notification_date'])
     # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
     DB = DBmanager()
-    DB.update_consecutive_false_for_whole()
+    DB.update_consecutive_false()
 
     if (start_date is not None) & (end_date is not None):
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
