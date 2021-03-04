@@ -222,7 +222,7 @@ def update_search_result(n_clicks,input_value):
         DB = DBmanager()
         #engine = DB.engine
         #DB.test_add_multiple()
-        DB.start_over()
+        #DB.start_over()
         DB.update_consecutive_false()
 
         #df = pd.read_sql_table('notificationlist',con = engine)
@@ -236,7 +236,7 @@ def update_search_result(n_clicks,input_value):
         else:
             # output_display = []
             # output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
-            output.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
+            output = output.sort_values(by = 'notification_date',ascending=True,axis =0)
             drop_columns = list(set(output.columns) - set(display_columns))
             output_display = output.drop(drop_columns,axis=1)
             output_display['notification_date'] = output_display['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))

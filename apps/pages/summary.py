@@ -2,270 +2,329 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
+import plotly.express as px
 from dash.dependencies import Input, Output, State, ClientsideFunction
+import datetime as dt
 import pandas as pd
+import numpy as np
+import io
+import urllib.parse
+import base64
+import json
+import sqlalchemy
 
+from data_manager import DBmanager,Cell
 from app import app
 from settings import MAPBOX_ACCESS_TOKEN
 
 
 
-
-def substation_health_card(title, id_prefix, additional_classnames=""):
+def status_block(title, id_prefix, additional_classnames=""):
     return html.Div(
         [
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Div(html.P(title, className="h2")),
-                        ],
-                        className="lm--card-item",
-                    ),
-                    html.Div(
-                        [
-                            html.Div([html.P("Attention Needed", className="h5")]),
-                            html.Span(id=f"{id_prefix}_dot_indicator", className="alert-dot"),
-                            html.Span(id=f"{id_prefix}_alert_value", className="mini_container_value"),
-                        ],
-                        className="lm--card-item u-pb0",
-                    ),
-                    html.Div(
-                        [
-                            html.Div([html.P("Healthy", className="h5")]),
-                            html.Span(className="healthy-dot"),
-                            html.Span(id=f"{id_prefix}_healthy_value", className="mini_container_value"),
-                        ],
-                        className="lm--card-item u-pt0",
-                    ),
-                ],
-                className="col u-cell",
-                style={"text-align": "right", "width": "50%"},
-            ),
             html.Div(
                 [
                     html.Div(
                         [],
                         id=f"{id_prefix}_chart_div",
                         className="lm--card-item col u-cell",
-                        style={"position": "relative", "min-width": "138px", "max-width": "202px"},
+                        style={"position": "relative", "min-width": "138px", "max-width": "188px",'text-align':'center'},
                     ),
                 ],
-                style={"width": "50%"},
+                className = 'col-sm-3 col-md-3 col-lg-3 u-cell',
             ),
-        ],
-        className="lm--card " + additional_classnames,
-        style={"height": "100%"},
-    )
-
-
-def substation_map_card():
-    return html.Div(
-        [
-            html.Div(
-                dcc.Graph(id="mapbox", config={'displayModeBar': False, 'responsive': True}, clear_on_unhover=True, className="lm--card-item"),
-                id="mapbox_container",
-                className="lm--card-item col-sm-12 col-md-12 u-cell",
-            )
-        ],
-        className="lm--card",
-        style={"height": "100%"}
-    )
-
-
-
-
-def equipment_health_card(network, eq_type, ok_count, ok_percentage, alarm_count, alarm_percentage):
-    return html.Div(
-        [
             html.Div(
                 [
+                    html.Div(
+                        [
+                            html.Div(html.P(title, className="h4")),
+                        ],
+                        className="lm--card-item u-grid",
+                    ),
                     html.Div(
                         [
                             html.Div(
                                 [
                                     html.Div(
                                         [
-                                            html.Div(html.P(f"{network} {eq_type}s", className="h2 u-pl0")),
-                                        ],
-                                        className="lm--card-item col-sm-12 u-cell",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Div([html.P("Attention Needed", className="h5")]),
-                                        ],
-                                        className="lm--card-item col-sm-12 u-cell u-pt1 u-pb0",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Div(
+                                            html.Button(
                                                 [
-                                                    html.Span(
-                                                        [],
-                                                        title=f"{alarm_percentage}%",
-                                                        style={"width": f"{max(alarm_percentage, 4) if alarm_count>0 else 0}%", "height": "100%", "background-color": "var(--color-red)", "display": "inline-block"},
+                                                    html.Div(
+                                                        [
+                                                            html.P("Meter Problem", className="h5",style={'color':'#4F5A60'}),
+                                                            html.Div(
+                                                                [
+                                                                    html.Span(className="healthy-dot",style={'background-color':'#48dcc0'}),
+                                                                    html.Span(id=f"{id_prefix}_meter_stuck_value", className="mini_container_value",style={'color':'#4F5A60'}),
+                                                                ],
+                                                                style = {'text-align':'left'},
+                                                            ),
+                                                        ],
                                                     ),
                                                 ],
-                                                title=f"{alarm_percentage}%",
-                                                style={"height": "80%", "background-color": "var(--color-grey100)"},
+                                                id = 'meter_cause_button',
+                                                n_clicks = 0,
+                                                className = 'transparent_button',
                                             ),
                                         ],
-                                        className="lm--card-item col u-cell u-pt0 u-pr0",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Span(f"{alarm_count}", className="mini_container_value u-p0", style={"line-height": "normal"}),
-                                        ],
-                                        className="lm--card-item u-cell u-pt0",
-                                        style={"width": "90px"},
-                                    ),
-
-                                    html.Div(
-                                        [
-                                            html.Div([html.P("Healthy", className="h5")]),
-                                        ],
-                                        className="lm--card-item col-sm-12 u-cell u-pt1 u-pb0",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Div(
-                                                [
-                                                    html.Span(
-                                                        [],
-                                                        title=f"{ok_percentage}%",
-                                                        style={"width": f"{max(ok_percentage, 4) if ok_count>0 else 0}%", "height": "100%", "background-color": "var(--color-green)", "display": "inline-block"},
-                                                    ),
-                                                ],
-                                                title=f"{ok_percentage}%",
-                                                style={"height": "80%", "background-color": "var(--color-grey100)"},
-                                            ),
-                                        ],
-                                        className="lm--card-item col u-cell u-pt0 u-pr0",
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Span(f"{ok_count}", className="mini_container_value u-p0", style={"line-height": "normal"}),
-                                        ],
-                                        className="lm--card-item u-cell u-pt0",
-                                        style={"width": "90px"},
-                                    ),
-
+                                        style = {'text-align':'left'},
+                                    ),                                   
                                 ],
-                                className="u-grid",
-                                style={"width": "100%"},
+                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Button(
+                                                [
+                                                    html.Div(
+                                                        [
+                                                            html.Div([html.P("Low Consumption", className="h5",style={'color':'#4F5A60'})]),
+                                                            html.Div(
+                                                                [
+                                                                    html.Span(className="healthy-dot",style={'background-color':'#ff9d5a','padding-left':'0'}),
+                                                                    html.Span(id=f"{id_prefix}_low_consumption_value", className="mini_container_value",style={'color':'#4F5A60'}),
+                                                                ],
+                                                                style = {'text-align':'left'},
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                                id = 'low_consumption_button',
+                                                n_clicks = 0,
+                                                className = 'transparent_button',
+                                            ),
+                                        ],
+                                        style = {'text-align':'left'},
+                                    ),  
+                                ],
+                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Button(
+                                                [
+                                                    html.Div(
+                                                        [
+                                                            html.Div([html.P("Attention Needed", className="h5",style={'color':'#4F5A60'})]),
+                                                            html.Div(
+                                                                [
+                                                                    html.Span(id=f"{id_prefix}_dot_indicator", className="alert-dot"),
+                                                                    html.Span(id=f"{id_prefix}_alert_value", className="mini_container_value",style={'color':'#4F5A60'}),
+                                                                ],
+                                                                style = {'text-align':'left'},
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                                id = 'alert_button',
+                                                n_clicks = 0,
+                                                className = 'transparent_button',
+                                            ),
+                                        ],
+                                        style = {'text-align':'left'},
+                                    ),
+                                ],
+                                className="lm--card-item col-sm-auto col-md-auto u-pb0 u-cell",
                             ),
                         ],
-                        className="lm--card u-p4",
-                        style={"width": "100%"},
+                        className = 'u-grid',
+                        style={'width':'100%'}
+                    ),
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Button(
+                                                [
+                                                    html.Div(
+                                                        [
+                                                            html.Div([html.P("High Consumption", className="h5",style={'color':'#4F5A60'})]),
+                                                            html.Div(
+                                                                [
+                                                                    html.Span(className="healthy-dot",style={'background-color':'#ffe75a'}),
+                                                                    html.Span(id=f"{id_prefix}_high_consumption_value", className="mini_container_value",style={'color':'#4F5A60'}),
+                                                                ],
+                                                                style = {'text-align':'left'},
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                                id = 'high_consumption_button',
+                                                n_clicks = 0,
+                                                className = 'transparent_button',
+                                            ),
+                                        ],
+                                        style = {'text-align':'left'},
+                                    ),
+                                ],
+                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Button(
+                                                [
+                                                    html.Div(
+                                                        [
+                                                            html.Div([html.P("Other_cause", className="h5",style={'color':'#4F5A60'})]),
+                                                            html.Div(
+                                                                [
+                                                                    html.Span(className="healthy-dot",style={'background-color':'#158693'}),
+                                                                    html.Span(id=f"{id_prefix}_other_cause_value", className="mini_container_value",style={'color':'#4F5A60'}),
+                                                                ],
+                                                                style = {'text-align':'left'},
+                                                            ),
+                                                        ],
+                                                    ),
+                                                ],
+                                                id = 'other_cause_button',
+                                                n_clicks = 0,
+                                                className = 'transparent_button',
+                                            ),
+                                        ],
+                                        style = {'text-align':'left'},
+                                    ),
+                                ],
+                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                            ),
+                        ],
+                        className='u-grid',
+                        style={'width':'100%'}
                     ),
                 ],
-                className="lm--card",
+                className="col-sm-7 col-md-7 col-lg-7 u-cell",
             ),
         ],
-        className="col-sm-12 col-xl-auto u-cell u-p1",
-        style={"min-width": "304px"}
+        className="lm--card u-grid" + additional_classnames,
+        style={'max-height':'198px'},
+    )
+
+def manipulation_bar():
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.P('Manipulation Bar',className='h5')
+                ],
+                className = 'u-pb2',
+            ),
+            html.Div(
+                [
+                    dcc.DatePickerRange(
+                        id='date-picker-range',
+                        min_date_allowed=dt.date(2019, 4, 17),
+                        max_date_allowed=dt.date(2021, 1, 8),
+                        initial_visible_month=dt.date(2021, 1, 8),
+                        end_date=dt.date(2020, 4, 17),
+                        start_date = dt.date(2019,4,17),
+                        className = 'datepicker_for_summary_page',
+                    ),
+                ],
+                className = 'u-grid-center',
+                style={'width':'100%'}
+            ),
+            # html.Div(
+            #     [
+            #         html.Div(
+            #             [
+            #                 html.Div(
+            #                     [
+            #                         dcc.Input(
+            #                             type="text",
+            #                             placeholder="consecutive_FALSE",
+            #                             id = 'add_column_input',
+            #                             className="input",
+            #                         ),
+            #                     ],
+            #                     className = 'col-sm-6 col-md-9 col-lg-8 u-cell',
+            #                 ),
+            #                 html.Div(
+            #                     [
+            #                         html.Button('Add', 
+            #                         id = 'add_column_button', 
+            #                         className='lm--button--secondary u-pv2',
+            #                         ),
+            #                     ],                            
+            #                     className = 'col-sm-6 col-md-2 col-lg-3 u-cell',
+            #                 ),
+
+            #             ],
+            #             className = 'u-grid',
+            #         ),
+            #     ],
+            #     className = 'u-pv2',
+            #     style={'height':'100%','display':'block'}
+            # ),
+            # html.Div(
+            #     [
+            #         html.Button(
+            #             [
+            #                 html.P('Save Changes',className = 'h4'),
+            #             ],
+            #             id = 'save_change_button',
+            #             className='lm--button--primary',
+            #         ),
+            #     ],
+            #     # className = 'u-grid u-grid-center@md u-grid-center@sm u-pv2',
+            #     className = 'u-pv2',
+            #     style={'height':'100%','display':'block'}
+            # ),
+
+        ],
+        className = 'lm--card',
+        style={'text-align':'center','display':'block'}
     )
 
 
-
-def equipment_list_table(network, eq_type, test_type, df):
-    return html.Div(
-        [
-            html.P(test_type, className="h4 u-pt4"),
-            dcc.Link(
-                [
-                    dash_table.DataTable(
-                        columns=[{"name": i.capitalize(), "id": i} for i in df.columns],
-                        data=df.to_dict("records"),
-                        # css=[{"selector": "tr:first-child", "rule": "text-align: left",}],
-                        style_data={"border": "0", "font-family": "var(--font-sans-serif)"},
-                        style_cell={"color": "black", "textAlign": "left", "font-size": "0.8rem"},
-                        style_as_list_view=True,
-                        page_size=5,
-                        style_table={"height": "auto", 'overflowY': 'auto'},
-                        style_data_conditional=[
-                            {
-                            'if': {
-                                    'filter_query': '{health} = "Alarm"'
-                                },
-                                'backgroundColor': '#FDD4D5',
-                            },
-                            {
-                                'if': {
-                                    'state': 'selected'  # 'active' | 'selected'
-                                },
-                               'backgroundColor': 'rgba(0, 116, 217, 0.3)',
-                               'border': '0',
-                            }
-                        ],
-                        id=f"{network.lower()}_{eq_type.lower()}_{test_type.replace(' ','_').lower()}_datatable",
-                    )
-                ],
-                href="/equipment?serialNo=TE3501-034",
-            ),
-        ],
-        className="col-sm-12 u-pb4",
-        style={"height": "auto"},
-    ),
-
-
-def equipment_list_card(network, equip_type, divs_by_test_type):
+def footer():
     return html.Div(
         [
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Div(
-                                [
-                                    html.Div([html.P(f"{network} {equip_type} Details")]),
-                                ],
-                                className="lm--card-item h2",
-                            ),
+                            html.P('2020 SP Group. All Rights Reserved'),
                         ],
-                        className="lm--card-item col-sm-12 col-md-12 u-cell u-pb0",
+                        className='col-sm-4 col-md-3 push-md-1 u-cell',
                     ),
                     html.Div(
                         [
-                            html.Div(
-                                divs_by_test_type,
-                                className="lm--card-item col-sm-12 u-pt0"
-                            ),
+                            html.P('This is a tagline'),
                         ],
-                        className="lm--card-item col-sm-12 col-md-12 u-cell u-ph5 u-pt0",
+                        className = "col-sm-4 col-md-2 push-md-2  u-cell"
                     ),
-
+                    html.Div(
+                        [
+                            html.Ul(
+                                [
+                                    html.Li('Contact Us',style={'display': 'inline-block','padding':'.25rem'}),
+                                    html.Li('Terms & Conditions',style={'display': 'inline-block','padding':'.25rem'}),
+                                    html.Li('Privacy & Policy',style={'display': 'inline-block','padding':'.25rem'}),
+                                ],
+                            )
+                        ],
+                        className="col-sm-4 col-md-3 push-md-1 u-cell",
+                    )  
                 ],
-                className="lm--card u-mt2",
-            ),
+                className='u-grid',
+                style={'width':'100%'},
+            )              
         ],
-        className="u-pb1",
-    ),
-
-
-
-
-
-
-
-
-
-
-
+        className="lm--footer",
+        style={'background':'#fff','position':'relative'}
+    )
 
 
 
 layout = [
-    # Title Bar
-    html.Div(
-        html.Nav(
-            html.H1("Summary", className="u-pl4 u-mb0"),
-            className="lm--header-nav",
-        ),
-        className="lm--header u-mb0 u-bb",
-        style={"margin-top": "3px", "padding": "8px 0"},
-    ),
-
+    dcc.Store(id="intermediate-value",storage_type='session'),
     html.Div(
         [
             # Main Content
@@ -276,195 +335,106 @@ layout = [
                             html.Div(
                                 [
                                     html.Div(
+                                        status_block('Notification Causes','general_status_block'),
+                                    ),
+                                ],
+                                className='u-pt2 u-pb1 u-ph0@sm u-ph1@md u-pr1@lg',
+                            ),
+                            html.Div(
+                                [
+                                    html.Div(
                                         [
                                             html.Div(
                                                 [
-                                                    html.Div([html.P("Substations")], className="h1 u-mb0")
+
                                                 ],
-                                                className="lm--card pageSectionHeaderCard",
+                                                id= 'consecutive_ture_bar',
+                                                style = {'max-height':'300px'},
+                                                className  = 'col-sm-9 col-md-9 col-lg-9 u-cell',
                                             ),
-                                        ],
-                                        className="u-pb1",
-                                    ),
-                                ],
-                                className="col-sm-12 col-md-12 u-cell u-pt3",
-                            ),
-                        ],
-                        className="u-grid u-pt4 u-ph2"
-                    ),
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.Div(
-                                        substation_map_card(),
-                                        className="col u-pt2",
-                                        id="substation_map",
-                                    ),
-                                ],
-                                className="col-sm-12 col-md-auto u-cell u-pt0 u-pb1 u-ph0@sm u-ph1@md u-pr1@lg",
-                                style={"height": "100%"},
-                            ),
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.Div(
-                                                substation_health_card("Source Stations", "source_stations"),
-                                                className="col-sm-12 col-md-6 u-cell u-pb1 u-pt0@sm u-ph0@sm u-ph1@md u-pr2@md",
-                                            ),
-                                            html.Div(
-                                                substation_health_card("CBD Stations", "cbd"),
-                                                className="col-sm-12 col-md-6 u-cell u-pb1 u-pt2@sm u-ph0@sm u-ph1@md u-pl1@md",
-                                            ),
-                                            html.Div(
-                                                substation_health_card("Priority Stations", "priority_stations"),
-                                                className="col-sm-12 col-md-6 u-cell u-pt2 u-pb1 u-ph0@sm u-ph1@md u-pr2@md",
-                                            ),
-                                            html.Div(
-                                                substation_health_card("All Other Stations", "all_other_stations"),
-                                                className="col-sm-12 col-md-6 u-cell u-pt2 u-pb1 u-ph0@sm u-ph1@md u-pl1@md",
-                                            ),
-                                        ],
-                                        className="u-grid",
-                                        style={"height": "100%"},
-                                    )
-                                ],
-                                id="substation_health_cards",
-                                className="col-sm-12 col-md-auto u-cell u-pt2@sm u-pt2@md u-pl3@lg",
-                            ),
-                        ],
-                        className="u-grid u-ph3 u-pt0 u-pb2",
-                    ),
-
-
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            # TRANSMISSION NETWORK
                                             html.Div(
                                                 [
                                                     html.Div(
                                                         [
-                                                            html.Div(
-                                                                [
-                                                                    html.Div(
-                                                                        [
-                                                                            html.Div(
-                                                                                [
-                                                                                    html.Div([html.P("Transmission Network")], className="h1 u-mb0")
-                                                                                ],
-                                                                                className="lm--card pageSectionHeaderCard",
-                                                                            ),
-                                                                        ],
-                                                                        className="u-pb1",
-                                                                    ),
-                                                                    html.Div(
-                                                                        [
-                                                                            html.Div(
-                                                                                [],
-                                                                                id="tn_equipment_health_chart_div",
-                                                                                className="u-grid u-mt0 u-ph2 u-pt2",
-                                                                            ),
-                                                                        ],
-                                                                        className="u-pb0",
-                                                                    ),
-                                                                    html.Div(
-                                                                        [],
-                                                                        id="transmission_network_alerts_cards",
-                                                                    ),
-                                                                ],
-                                                                # className="col-sm-12 col-md-6 u-cell u-pt0",
-                                                            ),
+                                                            html.P('FALSE more than 2 times:',className = 'h5'),
+                                                            html.Span(id="more_than_2_value", className="mini_container_value",style={'color':'#4F5A60'}),
                                                         ],
-                                                        className="u-ph0@sm u-pr4@md u-pt4 u-pb2",
+                                                        className = 'u-pb3 u-mb3',
                                                     ),
-                                                ],
-                                                className="col-sm-12 col-md-6 u-cell u-pt4 u-ph1",
-                                            ),
-
-                                            # DISTRIBUTION NETWORK
-                                            html.Div(
-                                                [
                                                     html.Div(
                                                         [
-                                                            html.Div(
-                                                                [
-                                                                    html.Div(
-                                                                        [
-                                                                            html.Div(
-                                                                                [
-                                                                                    html.Div([html.P("Distribution Network")], className="h1 u-mb0")
-                                                                                ],
-                                                                                className="lm--card pageSectionHeaderCard",
-                                                                            ),
-                                                                        ],
-                                                                        className="u-pb1",
-                                                                    ),
-                                                                    html.Div(
-                                                                        [
-                                                                            html.Div(
-                                                                                [],
-                                                                                id="dn_equipment_health_chart_div",
-                                                                                className="u-grid u-mt0 u-ph2 u-pt2",
-                                                                            ),
-                                                                        ],
-                                                                        className="u-pb0",
-                                                                    ),
-                                                                    html.Div(
-                                                                        [],
-                                                                        id="distribution_network_alerts_cards",
-                                                                    ),
-                                                                ],
-                                                            ),
+                                                            html.P('Latest',className = 'h5'),
+                                                            html.Span(id="latest_value", className="mini_container_value",style={'color':'#4F5A60'}),
                                                         ],
-                                                        className="u-ph0@sm u-pl4@md u-pt4 u-pb2",
                                                     ),
                                                 ],
-                                                className="col-sm-12 col-md-6 u-cell u-pt4 u-ph1",
+                                                className = 'col-sm-3 col-md-3 col-lg-3 u-cell',
                                             ),
                                         ],
-                                        className="u-grid",
-                                        style={"height": "100%"},
-                                    )
+                                        className = 'lm--card u-grid',
+                                    ),
                                 ],
-                                id="equipment_health_cards",
-                                className="col-sm-12 u-cell",
+                                # style = {'max-height':'300px'},
+                                className='u-pt0 u-pb1 u-ph0@sm u-ph1@md u-pr1@lg',
                             ),
                         ],
-                        className="u-grid u-ph3",
+                        className = 'col-sm-6 col-md-9 col-md-8 u-cell',
+                        # style={'display':'block'},
                     ),
-
+                    #Manipulation bar
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    manipulation_bar()
+                                ],
+                                id = 'manipulation_bar',
+                            ),
+                        ],
+                        className = 'col-sm-5 col-md-2 col-md-3 u-cell u-pt2 u-pb1 u-ph0@sm u-ph1@md u-pr1@lg',
+                    ),
                 ],
-                className="mainContent u-ph1@md u-ph3@lg",
+                className="mainContent u-ph1@md u-ph3@lg u-grid",
             ),
         ],
     ),
+    # html.Div(
+    #     [
+    #         footer()
+    #     ],
+    # ),
+
 ]
 
+def draw_non_consecutive_found():
+        return html.Div(
+        [   
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.P('No anomaly found',className = 'h2',style={'color':'#4F5A60'})
+                        ],
+                        style={'text-align':'center'}
+                    )
+                ],
+                className = 'u-grid-center',
+                style={'text-align':'center'}
+            ),
+        ],
+        className = 'lm--card',
+        style={'text-align':'center','display':'block'}
+    )
 
-
-
-
-
-
-
-
-
-
-
-def generate_donut_chart(alarm_count, ok_count):
-    labels = ['Attention Needed','Healthy']
-
-    fig = go.Figure(data=[go.Pie(labels=labels, values=[alarm_count, ok_count], direction="clockwise", sort=False, hole=.76)])
+def generate_donut_chart(label_list,value_list):
+    # labels = ['meter_count','low_consumption','high_consumption','other_cause']
+    color_dic = {'meter_count':"#48dcc0",'low_consumption':'#ff9d5a','high_consumption':'#ffe75a','other_cause':'#158693'}
+    fig = go.Figure(data=[go.Pie(labels=label_list, values=value_list, direction="clockwise", sort=False, hole=.76)])
 
     fig.update_traces(
         hoverinfo='label+percent',
         textinfo='none',
-        marker=dict(colors=["#e54545", "#48dcc0"])),
+        marker=dict(colors=[color_dic[i] for i in label_list])),
     fig.update_layout(
         showlegend=False,
         autosize=True,
@@ -476,7 +446,7 @@ def generate_donut_chart(alarm_count, ok_count):
     return fig
 
 
-def generate_substation_health_card_values(fig, total_count, ok_count, alarm_count):
+def generate_substation_health_card_values(fig, total_count, ok_count, alarm_count,infected,inactive,towatch):
     return [
         dcc.Graph(
             id="source_stations_chart",
@@ -492,214 +462,230 @@ def generate_substation_health_card_values(fig, total_count, ok_count, alarm_cou
             ],
             className="mini_container_data_label"
         ),
-    ], "inactive-dot" if alarm_count==0 else "alert-dot", [f"{ok_count}"], [f"{alarm_count}"]
+    ], "inactive-dot" if alarm_count==0 else "alert-dot", [f"{ok_count}"], [f"{alarm_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
+def draw_consecutive_true_bar(df):
 
-@app.callback(
-    [
-        # Source Stations
-        Output("source_stations_chart_div", "children"),
-        Output("source_stations_dot_indicator", "className"),
-        Output("source_stations_healthy_value", "children"),
-        Output("source_stations_alert_value", "children"),
+    dff = df.groupby(['consecutive_false'])['notification_no'].size()
+    dff = dff.iloc[1:]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(y = dff,
+                    x = dff.index,
+                    marker_color='#00B0B2'
+                    ))
 
-        # CBD Stations
-        Output("cbd_chart_div", "children"),
-        Output("cbd_dot_indicator", "className"),
-        Output("cbd_healthy_value", "children"),
-        Output("cbd_alert_value", "children"),
-
-        # Priority Stations
-        Output("priority_stations_chart_div", "children"),
-        Output("priority_stations_dot_indicator", "className"),
-        Output("priority_stations_healthy_value", "children"),
-        Output("priority_stations_alert_value", "children"),
-
-        # All Other Substations
-        Output("all_other_stations_chart_div", "children"),
-        Output("all_other_stations_dot_indicator", "className"),
-        Output("all_other_stations_healthy_value", "children"),
-        Output("all_other_stations_alert_value", "children"),
-    ],
-    [
-        Input("dummy_store", "data"),
-    ])
-def substation_health_charts_callback(df):
-    df = pd.read_json(df, orient="split")
-
-    charts = ["source_stations", "cbd_stations", "priority_stations", "all_other_stations"]
-
-    output = []
-
-    for type in charts:
-        total_count = 123
-        alarm_count = 11
-        ok_count = 112
-
-        fig = generate_donut_chart(alarm_count, ok_count)
-        content = generate_substation_health_card_values(fig, total_count, ok_count, alarm_count)
-        output.extend(content)
-
-    return output
-
-
-
-
-
-
-
-
-
-
-
-@app.callback(
-    [
-        Output("tn_equipment_health_chart_div", "children"),
-        Output("dn_equipment_health_chart_div", "children")
-    ],
-    [
-        Input("dummy_store", "data"),
-    ])
-def equipment_health_chart_callback(df):
-    df = pd.read_json(df, orient="split")
-
-    output = []
-
-    networks = ["TN", "DN"]
-
-    for network in networks:
-        # nw_df = df[df["network"]==network]
-        # eq_types_list = nw_df["equipment_type"].unique()
-        eq_types_list = ["transformer", "switchgear"]
-
-        chart = []
-
-        for eq_type in eq_types_list:
-            # eq_filter = nw_df["equipment_type"]==eq_type
-
-            # total_count = nw_df[eq_filter].nunique()["serialNo"]
-            #
-            # cols_to_check = meta_df[(meta_df["network"]==network) & (meta_df["equipment"]==eq_type)]["column_name"].to_list()
-            # all_false = [False]*len(nw_df.index)
-            # alarm_condition = all_false if not cols_to_check else nw_df[f"alarm_{cols_to_check[0]}"]==1
-            # no_test_record_condition = all_false if not cols_to_check else nw_df[f"alarm_{cols_to_check[0]}"].isnull()
-            # for col in cols_to_check:
-            #     alarm_condition = (alarm_condition) | (nw_df[f"alarm_{col}"]==1)
-            #     no_test_record_condition = (no_test_record_condition) & (nw_df[f"alarm_{col}"].isnull())
-            #
-            # alarm_count = nw_df[(eq_filter) & (alarm_condition)].nunique()["serialNo"]
-            # no_test_record_count = nw_df[(eq_filter) & (no_test_record_condition)].nunique()["serialNo"]
-            # ok_count = total_count - alarm_count - no_test_record_count
-            #
-            # # if no alarm record for a substation, assume that substation is healthy
-            # ok_count += no_test_record_count
-
-            total_count = 999
-            alarm_count = 99
-            ok_count = 900
-
-            ok_percentage = round((ok_count/total_count)*100, 1)
-            alarm_percentage = round((alarm_count/total_count)*100, 1)
-
-            chart.append(
-                equipment_health_card(network, eq_type.capitalize(), ok_count, ok_percentage, alarm_count, alarm_percentage)
-            )
-
-        output.append(chart)
-
-    return output
-
-
-
-
-
-
-
-
-
-
-# generate map chart
-def generate_graph(lat=['1.3521', '1.3711'], lon=['103.8198', '103.7898'], text=['s11111111', 's222222222'], customdata=None):
-    fig = go.Figure(go.Scattermapbox(
-        lat=lat,
-        lon=lon,
-        mode='markers',
-        marker=go.scattermapbox.Marker(
-            size=10,
-            color="#e54545",
-        ),
-        text=text,
-        textposition="top center",
-        # hovertemplate="<b>%{text}</b> [%{customdata[0]}]<br>" \
-        #               + "<i>%{customdata[1]}</i><br><br>" \
-        #               + "Type: %{customdata[2]}, " \
-        #               + "Zone: %{customdata[3]}<br>" \
-        #               + "<extra></extra>",
-        customdata=customdata,
-    ))
     fig.update_layout(
-        autosize=True,
-        margin=dict(l=0, r=0, b=0, t=0),
-        hovermode="closest",
-        hoverlabel=dict(
-            bgcolor="white"
+        margin = dict(t=5,r=5,l=5,b=5),
+        height = 300,
+        # title='Notifications with consecutive FALSE prediction',
+        yaxis=dict(
+            title='Notifications number',
+            titlefont_size=12,
+            tickfont_size=10,
+            tickmode = 'array',
+            tickvals = dff.tolist(),
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
         ),
-        plot_bgcolor="#F9F9F9",
-        paper_bgcolor="#F9F9F9",
-        mapbox=dict(
-            accesstoken=MAPBOX_ACCESS_TOKEN,
-            style="basic",
-            center=go.layout.mapbox.Center(
-                lat=1.3450,
-                lon=103.8198
-            ),
-            zoom=10.3,
-        )
+        xaxis=dict(
+            title = 'Consecutive False number',
+            titlefont_size=12,
+            tickfont_size=10,
+            tickmode = 'array',
+            tickvals =  dff.index,
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
+        paper_bgcolor = '#fff',
+        plot_bgcolor = '#fff',
+        # legend=dict(
+        #     x=0,
+        #     y=1.0,
+        #     bgcolor='rgba(255, 255, 255, 0)',
+        #     bordercolor='rgba(255, 255, 255, 0)'
+        # ),
+        barmode='group',
+        # bargap=0.15, # gap between bars of adjacent location coordinates.
+        # bargroupgap=0.1 # gap between bars of the same location coordinate.
     )
-    return fig
+    return  [
+        dcc.Graph(
+            id="consecutive_true_bar_plot",
+            figure=fig,
+            config={'displayModeBar': False,
+                    'responsive': True},
+            style={'height':'100%'},
+        ),
+    ]
 
+def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,temp_value):
+    if n_clicks % 2 == 1:
+        label_list.append(temp_label)
+        value_list.append(temp_value)
+        total_count += temp_value
+    else:
+        if temp_label in label_list:
+            temp_index = list.index(temp_label)
+            del label_list[temp_index]
+            del value_list[temp_index]
+            total_count -= temp_value
+    return label_list,value_list,total_count
 
+#this callback uses filted data to updata char, status block, bar graph and so on.
 @app.callback(
-    Output("mapbox", "figure"),
     [
-        Input("dummy_store", "data"),
+        # General Status block diagram value
+        Output("general_status_block_chart_div", "children"),
+        Output("general_status_block_dot_indicator", "className"),
+        Output("general_status_block_meter_stuck_value", "children"),
+        Output("general_status_block_alert_value", "children"),
+        Output('general_status_block_low_consumption_value','children'),
+        Output('general_status_block_high_consumption_value','children'),
+        Output('general_status_block_other_cause_value','children'),
+
+        Output('consecutive_ture_bar','children'),
+        Output('more_than_2_value','children'),
+        Output('latest_value','children'),
+    ],
+    [
+        Input('date-picker-range','start_date'),
+        Input('date-picker-range','end_date'),
+        Input('meter_cause_button','n_clicks'),
+        Input('low_consumption_button','n_clicks'),
+        Input('high_consumption_button','n_clicks'),
+        Input('other_cause_button','n_clicks'),
     ])
-def mapbox_callback(df):
-    # df = pd.read_json(df, orient="split")
-    #
-    # lats, lons, texts, customdata = [], [], [], []
-    #
-    # has_alarm_df = df[df["alarm"]==True]
-    #
-    # for row in has_alarm_df.itertuples():
-    #     lats.append(row.lat)
-    #     lons.append(row.long)
-    #     texts.append(row.name)
-    #     customdata.append([
-    #         row.mrc, #mrc
-    #         row.address, #address
-    #         "T&D" if (row.DN and row.TN) \
-    #             else "TN" if (not row.DN and row.TN) \
-    #             else "DN" if (row.DN and not row.TN) \
-    #             else "Unknown", #type
-    #         row.zone, #zone
-    #     ])
 
-    return generate_graph()
+def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
+    # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+    # engine = sqlalchemy.create_engine(conn_url)
+    # df = pd.read_sql_table('notificationlist',con = engine)
+
+    # df['notification_date'] = pd.to_datetime(df['notification_date'])
+    # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+    DB = DBmanager()
+    DB.update_consecutive_false()
+
+    if (start_date is not None) & (end_date is not None):
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        if(start_date < end_date):
+            df = DB.query_in_timeperiod(start_date,end_date)
+            # df = df[df['notification_date'] > start_date]
+            # df = df[df['notification_date'] < end_date]
+        else:
+            df = DB.fetch_all()
+    else:
+        df = DB.fetch_all()
+
+    output = []
+
+    total_count = 0
+    meter_count = 0
+    low_consumption =  0
+    high_consumption = 0
+    other_cause = 0
+    alarm_count =  df.groupby(['prediction']).size().iloc[1]
+    df_cause = df.groupby('cause_code').notification_no.nunique()
+    cause_code_type = df_cause.index
+
+    for i in range(len(cause_code_type)):
+        if 'Meter' in cause_code_type[i]:
+            meter_count += df_cause[i]
+        elif cause_code_type[i] == 'Low Consumption':
+            low_consumption += df_cause[i]
+        elif cause_code_type[i] == 'High Consumption':
+            high_consumption += df_cause[i]
+        else:
+            other_cause += df_cause[i]
+
+    label_list = []
+    value_list = []
+    df_for_bar = pd.DataFrame()
+    # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,meter_n_clicks,'meter_count',meter_count)
+    # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,lc_n_clicks,'low_consumption',low_consumption)
+    # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,hc_n_clicks,'high_consumption',high_consumption)
+    # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,other_n_clicks,'other_cause',other_cause)
+    if meter_n_clicks % 2 == 1:
+        label_list.append('meter_count')
+        value_list.append(meter_count)
+        total_count += meter_count
+        df_temp = df[df['cause_code'].str.contains('Meter',na=False, regex=True)]
+        df_for_bar= pd.concat([df_temp,df_for_bar])
+
+    if lc_n_clicks % 2 == 1:
+        label_list.append('low_consumption')
+        value_list.append(low_consumption)
+        total_count += low_consumption
+        df_temp = df[df['cause_code'] == 'Low Consumption']
+        df_for_bar= pd.concat([df_temp,df_for_bar])
+
+    if hc_n_clicks % 2 == 1:
+        label_list.append('high_consumption')
+        value_list.append(high_consumption)
+        total_count += high_consumption
+        df_temp = df[df['cause_code'] == 'High Consumption']
+        df_for_bar= pd.concat([df_temp,df_for_bar])
+
+    if other_n_clicks % 2 == 1:
+        label_list.append('other_cause')
+        value_list.append(other_cause)
+        total_count += other_cause
+        df_temp = df[(~(df['cause_code'].str.contains('Meter',na=False, regex=True))) & (df['cause_code'] != 'High Consumption') & (df['cause_code'] != 'Low Consumption')]
+        df_for_bar= pd.concat([df_temp,df_for_bar])
+
+    if (meter_n_clicks % 2 == 0) & (lc_n_clicks % 2 == 0) & (hc_n_clicks % 2 == 0) & (other_n_clicks % 2 == 0):
+        label_list = ['meter_count','low_consumption','high_consumption','other_cause']
+        value_list = [meter_count,low_consumption,high_consumption,other_cause]
+        total_count = meter_count + low_consumption + high_consumption + other_cause
+        df_for_bar = df
+
+    fig = generate_donut_chart(label_list,value_list)
+    content = generate_substation_health_card_values(fig, total_count, meter_count, alarm_count,low_consumption,high_consumption ,other_cause)
+    output.extend(content)
+
+    bar = draw_consecutive_true_bar(df_for_bar)
+    output.append(bar)
+
+    df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
+    more_than_2 = [f"{df_for_bar.size}"]
+    output.append(more_than_2)
+    if(more_than_2 == 0):
+        latest = 'None'
+    else:
+        #df_for_bar['notification_date'] = pd.to_datetime(df_for_bar['notification_date'])
+        df_for_bar = df_for_bar.sort_values(by = 'notification_date',ascending = True)
+        latest = df_for_bar.tail(1)['notification_date'].dt.strftime('%Y-%m-%d')
+    output.append(latest)
+    return output
 
 
-
-
-
-
-
-
+#this callback uses date picker range to filte data
 # @app.callback(
-#     Output("url", "href"),
-#     [
-#         Input("mapbox", "clickData"),
-#     ])
-# def map_marker_onclick_handler(map_data):
-#     if map_data:
-#         substation_mrc = map_data.get("points")[0].get("customdata")[0]
-#         return f"/substation?mrc={substation_mrc}"
+#     Output('intermediate-value', 'data'),
+#     [Input('date-picker-range','start_date'),
+#     Input('date-picker-range','end_date')],
+#     #State('memory-value','data')
+# )
+
+# def update_date_range(start_date,end_date):
+#     #df = pd.read_json(df, orient="split")
+#     conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+#     engine = sqlalchemy.create_engine(conn_url)
+#     df = pd.read_sql_table('notificationlist',con = engine)
+
+#     #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
+#     df['notification_date'] = pd.to_datetime(df['notification_date'])
+
+#     if (start_date is not None) & (end_date is not None):
+#         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+#         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+#         if(start_date < end_date):
+#             df = df[df['notification_date'] > start_date]
+#             df = df[df['notification_date'] < end_date]
+
+#     return df.to_json(orient='split',date_format='iso')

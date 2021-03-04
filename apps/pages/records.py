@@ -14,12 +14,6 @@ import timeit
 from data_manager import DBmanager,Cell
 from app import app
 
-df_1 = pd.DataFrame({
-    'a': [1, 2, 3, 4],
-    'b': [2, 1, 5, 6],
-    'c': ['x', 'x', 'y', 'y']
-})
-
 display_columns = ['notification_no','notification_date','contract_acct','cause_code','meter_no','prediction','consecutive_false']
 
 def draw_datatable():
@@ -166,17 +160,17 @@ def draw_upper_block():
 
                                         ],
                                         id = 'little_chart',
-                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell forchecking',
                                     ),
                                     html.Div(
                                         [
                                             html.P("", className="h4",id = 'little_chart_label')
                                         ],
-                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 u-cell',
+                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 u-cell forchecking',
                                         style = {'display':'flex','text-align':'center'}
                                     ),
                                 ],
-                                className = 'u-grid',
+                                className = 'u-grid forchecking',
                             )
                         ],
                         
@@ -238,11 +232,11 @@ def generate_little_chart(true_count, false_count):
     fig.update_traces(
         hoverinfo='label+percent',
         textinfo='none',
-        marker=dict(colors=["#e54545", "#48dcc0"])),
+        marker=dict(colors=["#e54545", "#48dcc0"]),
+    ),
     fig.update_layout(
         showlegend=False,
         autosize=True,
-        height=170,
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
@@ -273,7 +267,6 @@ def update_records(date,n_clicks,trace_option,download_clicks):
     if(n_clicks>0) & (date is not None):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
-        print("Updating tracing records, time is :",starttime)
         # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
         # engine = sqlalchemy.create_engine(conn_url)
         # df = pd.read_sql_table('notificationlist',con = engine)
@@ -291,6 +284,8 @@ def update_records(date,n_clicks,trace_option,download_clicks):
             end_date = start_date - dt.timedelta(days=365)
         elif trace_option == 'all time':
             end_date = dt.datetime(2019, 4, 17)
+        else:
+            return [None,'You have not chosen trace period',None,'','']
 
         # df['meter_contract_no'] = df['meter_no'] + df['contract_acct']
         # combine_list = df[df['notification_date'] == start_date]['meter_contract_no'].tolist()
@@ -326,9 +321,8 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         fig = generate_little_chart(true_count,false_count)
         chart_content = [dcc.Graph(
             figure=fig,
-            config={'displayModeBar': False,
-                    'responsive': True},
             style={'width': '48px','height':'48px'},
+            className = 'forchecking',
         )]
         csv_string = df.to_csv(index=False, encoding='utf-8')
         csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)

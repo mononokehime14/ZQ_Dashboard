@@ -8,7 +8,7 @@ import re
 
 from app import app
 from data_manager import DBmanager,Cell
-from pages import summary_3, search,records
+from pages import summary,search,records
 
 import sqlalchemy
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -141,7 +141,7 @@ def display_page(pathname):
     pages = {
         "/": {
             "title": "Summary",
-            "layout": summary_3.layout
+            "layout": summary.layout
         },
         "/search": {
             "title": "Query",
