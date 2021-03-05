@@ -25,24 +25,34 @@ class Cell(Base):
     prediction = Column(Boolean)
     consecutive_false = Column(Integer)
 
-#Base.metadata.create_all(bind = engine,checkfirst = True)
+def count_false(row):
+    global false_count
+    if row['prediction']:
+        false_count = 0
+    else:
+        false_count += 1
+    consecutive_false_dic[row['notification_no']] = false_count
+    return 0
 
-    # def __repr__(self):
-    #     return "type:{self.type},no:{self.number}, date:{self.date},contract:{self.contract_acct},cause_code:{self.cause_code},meter:{self.meter_no},prediction:{self.prediction},consecutive_false:{self.consecutive_false}"
+def make_zero(row_no):
+    consecutive_false_dic[row_no] = 0
+    return 0
 
 def find_consecutive_false(group):
     if(len(group) > 1):
         group = group.sort_values(by = 'notification_date',ascending=True)
-        false_count = 0
+        false_count = 0 
         for index,row2 in group.iterrows():
             if row2['prediction'] == False:
                 false_count += 1
             elif row2['prediction'] == True:
                 false_count = 0
             consecutive_false_dic[row2['notification_no']] = false_count
+        # group.apply(lambda x: count_false(x),axis = 1)
     else:
-        for i in group['notification_no']:
-            consecutive_false_dic[i] = 0
+        group['notification_no'].apply(lambda x: make_zero(x))
+        # for i in group['notification_no']:
+        #     consecutive_false_dic[i] = 0
     return 0
 
 class DBmanager:
@@ -62,10 +72,10 @@ class DBmanager:
         session = self.session
         try:
             session.add_all([
-                Cell(notification_type = 'ZQ',notification_no = 'qwer3',notification_date = '2020-04-12 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= 'True'),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer4',notification_date = '2020-04-13 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= 'False'),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer1',notification_date = '2020-04-10 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= 'False'),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer2',notification_date = '2020-04-11 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= 'False'),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer3',notification_date = '2020-04-12 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= True),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer4',notification_date = '2020-04-13 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer1',notification_date = '2020-04-10 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer2',notification_date = '2020-04-11 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
             ])
             session.commit()
         except:
@@ -77,10 +87,8 @@ class DBmanager:
     
     def update_consecutive_false(self):
         session = self.session
-        engine = self.engine
         starttime = timeit.default_timer()
         column_exist = session.query(session.query(Cell.consecutive_false).exists()).scalar()
-        print(f"column exist?:{column_exist}")
         if column_exist:
             #new_data = session.query(Cell).filter(Cell.consecutive_false == None).all()
             df_nan_in_cf = pd.read_sql(session.query(Cell).filter(Cell.consecutive_false == None).statement, session.bind)
@@ -91,8 +99,6 @@ class DBmanager:
                 #no_list = df_nan_in_cf['notification_no'].tolist()
                 df = pd.read_sql(session.query(Cell).filter(or_(Cell.meter_no.in_(acct_list),Cell.contract_acct.in_(acct_list))).statement, session.bind)
                 print("Loading done, used time:", timeit.default_timer() - starttime)
-                df['notification_date'] = pd.to_datetime(df['notification_date'])
-                df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
                 # df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
                 consecutive_false_dic.clear()
                 df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
@@ -100,6 +106,8 @@ class DBmanager:
                 try:
                     for key,value in consecutive_false_dic.items():
                         user = session.query(Cell).filter(Cell.notification_no == key).update({"consecutive_false":value})
+                    # for row in session.query(Cell).filter(Cell.notification_no.in_(consecutive_false_dic.keys())).all():
+                    #     row.consecutive_false = consecutive_false_dic[row.notification_no]
                     session.commit()
                 except:
                     session.rollback()
@@ -124,9 +132,9 @@ class DBmanager:
         starttime = timeit.default_timer()
         df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
         print("Calculation done, used time:", timeit.default_timer() - starttime)
-        starttime = timeit.default_timer()
-        df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
-        print("df ready, used time:", timeit.default_timer() - starttime)
+        # starttime = timeit.default_timer()
+        # df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
+        # print("df ready, used time:", timeit.default_timer() - starttime)
         starttime = timeit.default_timer()
         session = self.session
         try:
@@ -146,7 +154,9 @@ class DBmanager:
     
     def query(self,input_text):
         session = self.session
+        starttime = timeit.default_timer()
         df = pd.read_sql(session.query(Cell).filter(or_(Cell.notification_no == input_text, Cell.meter_no == input_text, Cell.contract_acct == input_text)).statement,session.bind)
+        print("Searching done, used time:", timeit.default_timer() - starttime)
         return df
 
     def trace_records(self,start_date,end_date):
@@ -169,13 +179,11 @@ class DBmanager:
     def query_in_timeperiod(self,start,end):
         session = self.session
         df = pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date >= start, Cell.notification_date <= end)).statement,session.bind)
-        df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         return df
     
     def fetch_all(self):
         session = self.session
         df = pd.read_sql_table('notificationlist',con = self.engine)
-        df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         return df
 
     def start_over(self):
@@ -194,34 +202,12 @@ class DBmanager:
     def count_false(self):
         session = self.session
         return len(session.query(Cell).filter(Cell.prediction == 'False').all())
-        
-
 
         
+
+
+        
         
 
-# def try_add_multiple():
-
-    
-    
-
-
-
-# def get_equipment_data():
-#     eq_df = pd.read_csv('data/Preprocessed Data/equipment.csv')
-#     eq_alarm_df = pd.read_csv('data/Assessed Data/equipment_alarm.csv')
-#
-#     df = eq_df.merge(eq_alarm_df, on="serialNo", how="left")
-#     return df
-
-# def get_dummy_data():
-#     return pd.DataFrame()
-
-# def get_engine(db, user, host, port, passwd):
-
-#     url = 'postgresql+psycopg2:://{user}:{passwd}@{host}:{port}/{db}'.format(
-#         user=user, passwd=passwd, host=host, port=port, db=db)
-#     engine = sqlalchemy.create_engine(url)
-#     return engine
 
 

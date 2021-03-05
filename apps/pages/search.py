@@ -217,7 +217,7 @@ layout = [
 )
 
 def update_search_result(n_clicks,input_value):
-    if(n_clicks > 0):
+    if(n_clicks > 0) & (input_value is not None):
         #df = pd.read_json(df,orient="split")
         DB = DBmanager()
         #engine = DB.engine
@@ -232,7 +232,7 @@ def update_search_result(n_clicks,input_value):
 
 
         if output.empty:
-            return [[],search_result_display_none()]
+            return [None,None]
         else:
             # output_display = []
             # output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
@@ -290,4 +290,4 @@ def update_search_result(n_clicks,input_value):
             ]
             return [trend_graph, output_display.to_dict('record')]
     else:
-        return [[],[]]
+        return [None,None]

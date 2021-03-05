@@ -160,17 +160,17 @@ def draw_upper_block():
 
                                         ],
                                         id = 'little_chart',
-                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell forchecking',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
                                     ),
                                     html.Div(
                                         [
                                             html.P("", className="h4",id = 'little_chart_label')
                                         ],
-                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 u-cell forchecking',
+                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 u-cell',
                                         style = {'display':'flex','text-align':'center'}
                                     ),
                                 ],
-                                className = 'u-grid forchecking',
+                                className = 'u-grid',
                             )
                         ],
                         
@@ -322,7 +322,6 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         chart_content = [dcc.Graph(
             figure=fig,
             style={'width': '48px','height':'48px'},
-            className = 'forchecking',
         )]
         csv_string = df.to_csv(index=False, encoding='utf-8')
         csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)

@@ -12,6 +12,7 @@ import urllib.parse
 import base64
 import json
 import sqlalchemy
+import timeit
 
 from data_manager import DBmanager,Cell
 from app import app
@@ -225,6 +226,8 @@ def manipulation_bar():
                         end_date=dt.date(2020, 4, 17),
                         start_date = dt.date(2019,4,17),
                         className = 'datepicker_for_summary_page',
+                        display_format = 'Do YYYY',
+                        updatemode = 'bothdates',
                     ),
                 ],
                 className = 'u-grid-center',
@@ -471,7 +474,9 @@ def draw_consecutive_true_bar(df):
     fig = go.Figure()
     fig.add_trace(go.Bar(y = dff,
                     x = dff.index,
-                    marker_color='#00B0B2'
+                    marker_color='#48DCC0',
+                    text = dff,
+                    textposition = 'outside'
                     ))
 
     fig.update_layout(
@@ -568,8 +573,13 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # df['notification_date'] = pd.to_datetime(df['notification_date'])
     # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
     DB = DBmanager()
+    print("Counting summary page used time ----------")
+    starttime = timeit.default_timer()
+    #DB.test_add_multiple()
     DB.update_consecutive_false()
+    print("Upadated DB, used time:", timeit.default_timer() - starttime)
 
+    starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
@@ -581,6 +591,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
             df = DB.fetch_all()
     else:
         df = DB.fetch_all()
+    
+    print("Getting initial data, used time:", timeit.default_timer() - starttime)
 
     output = []
 
@@ -591,8 +603,10 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     other_cause = 0
     alarm_count =  DB.count_false()
     df_cause = 0 if df.empty else df.groupby('cause_code').notification_no.nunique()
+    print(df_cause.head(5))
     cause_code_type = df_cause.index
 
+    starttime = timeit.default_timer()
     for i in range(len(cause_code_type)):
         if 'Meter' in cause_code_type[i]:
             meter_count += df_cause[i]
@@ -602,6 +616,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
             high_consumption += df_cause[i]
         else:
             other_cause += df_cause[i]
+    
+    print("Calculation of numbers done, used time:", timeit.default_timer() - starttime)
 
     label_list = []
     value_list = []
@@ -610,6 +626,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,lc_n_clicks,'low_consumption',low_consumption)
     # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,hc_n_clicks,'high_consumption',high_consumption)
     # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,other_n_clicks,'other_cause',other_cause)
+    starttime = timeit.default_timer()
     if meter_n_clicks % 2 == 1:
         label_list.append('meter_count')
         value_list.append(meter_count)
@@ -644,6 +661,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         total_count = meter_count + low_consumption + high_consumption + other_cause
         df_for_bar = df
 
+    print("df_for_bar ready, used time:", timeit.default_timer() - starttime)
     fig = generate_donut_chart(label_list,value_list)
     content = generate_substation_health_card_values(fig, total_count, meter_count, alarm_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
@@ -651,7 +669,9 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     bar = draw_consecutive_true_bar(df_for_bar)
     output.append(bar)
 
+    starttime = timeit.default_timer()
     df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
+    print("Searching for more than 2 done, used time:", timeit.default_timer() - starttime)
     more_than_2 = [f"{df_for_bar.size}"]
     output.append(more_than_2)
     if(more_than_2 == 0):
