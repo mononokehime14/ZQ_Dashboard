@@ -8,11 +8,24 @@ from sqlalchemy.sql import exists
 import datetime as dt
 import timeit
 
-conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+from pandarallel import pandarallel
+
+import os
+
+try: 
+    print("DB URL:", os.environ['DB_URL']) 
+except KeyError:  
+    print("Environment variable does not exist") 
+
+# conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+conn_url = os.environ.get('DB_URL', "postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db")
 engine = create_engine(conn_url)
 
 Base = declarative_base()
 consecutive_false_dic = {}
+#false_count = 0
+
+pandarallel.initialize()
 
 class Cell(Base):
     __tablename__ = 'notificationlist'
@@ -41,6 +54,7 @@ def make_zero(row_no):
 def find_consecutive_false(group):
     if(len(group) > 1):
         group = group.sort_values(by = 'notification_date',ascending=True)
+        # global false_count
         false_count = 0 
         for index,row2 in group.iterrows():
             if row2['prediction'] == False:
@@ -48,7 +62,7 @@ def find_consecutive_false(group):
             elif row2['prediction'] == True:
                 false_count = 0
             consecutive_false_dic[row2['notification_no']] = false_count
-        # group.apply(lambda x: count_false(x),axis = 1)
+        #group.parallel_apply(lambda x: count_false(x),axis = 1)
     else:
         group['notification_no'].apply(lambda x: make_zero(x))
         # for i in group['notification_no']:
@@ -125,8 +139,8 @@ class DBmanager:
         print("Whole table update")
         starttime = timeit.default_timer()
         consecutive_false_dic.clear()
-        #df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True)
-        df = pd.read_sql_table('notificationlist',con = engine)
+        df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True)
+        #df = pd.read_sql_table('notificationlist',con = engine)
         df['notification_date'] = pd.to_datetime(df['notification_date'])
         print("Loading target list done, used time:", timeit.default_timer() - starttime)
         starttime = timeit.default_timer()

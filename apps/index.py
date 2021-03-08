@@ -15,6 +15,11 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from flask import Flask
 import timeit
 
+# import os
+# import pprint
+# pprint.pprint(dict(os.environ),width = 1)
+# os.environ['DB_url'] = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
+# print(os.environ['DB_url'])
 
 server = app.server
 
