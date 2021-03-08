@@ -1,3 +1,6 @@
+import os
+
+
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine,String,Column,or_,and_,update,asc
@@ -7,36 +10,22 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import exists
 import datetime as dt
 import timeit
-
 from pandarallel import pandarallel
 
-import os
 
-try: 
-    print("DB URL:", os.environ['DB_URL']) 
-except KeyError:  
-    print("Environment variable does not exist") 
+from models import Cell
+from setttings import DB_URI
 
 # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-conn_url = os.environ.get('DB_URL', "postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db")
-engine = create_engine(conn_url)
+# conn_url = os.environ.get('DB_URI', "postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db")
+engine = create_engine(DB_URI)
 
 Base = declarative_base()
 consecutive_false_dic = {}
 #false_count = 0
 
-pandarallel.initialize()
+#pandarallel.initialize()
 
-class Cell(Base):
-    __tablename__ = 'notificationlist'
-    notification_type = Column(Text)
-    notification_no = Column(Text,nullable =False,primary_key= True,index = True)
-    notification_date = Column(DateTime(timezone = False),nullable =False,index = True)
-    contract_acct = Column(Text,nullable = False,index = True)
-    cause_code = Column(Text)
-    meter_no = Column(Text,nullable = False,index = True)
-    prediction = Column(Boolean)
-    consecutive_false = Column(Integer)
 
 def count_false(row):
     global false_count
