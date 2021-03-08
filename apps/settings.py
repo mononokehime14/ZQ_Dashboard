@@ -1,7 +1,5 @@
 import os
 
-from pathlib import Path
-
 
 def get_env_or_raise(name, default_value=None):
     var = os.environ.get(name)
@@ -12,5 +10,4 @@ def get_env_or_raise(name, default_value=None):
         return default_value
     return var
 
-
-MAPBOX_ACCESS_TOKEN = get_env_or_raise('MAPBOX_ACCESS_TOKEN')
+BD_URI = get_env_or_raise('DB_URI')

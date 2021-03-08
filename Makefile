@@ -1,6 +1,6 @@
-REPO=porter.azurecr.io/porter/digital-twin-dashboard
-TAG=0.0.1
-TEST_POD_NAME=digitwin-dash-test
+REPO=porter.azurecr.io/porter/zq-dashboard
+TAG=0.1.0
+TEST_POD_NAME=zq-dashboard
 
 .PHONY: deploy
 
