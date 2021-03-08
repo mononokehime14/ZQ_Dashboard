@@ -13,8 +13,8 @@ import timeit
 from pandarallel import pandarallel
 
 
-from models import Cell
-from setttings import DB_URI
+from apps.models import Cell
+from apps.settings import DB_URI
 
 # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
 # conn_url = os.environ.get('DB_URI', "postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db")
@@ -36,9 +36,12 @@ def count_false(row):
     consecutive_false_dic[row['notification_no']] = false_count
     return 0
 
-def make_zero(row_no):
-    consecutive_false_dic[row_no] = 0
-    return 0
+def make_single_label(row):
+    if row['prediction']:
+        consecutive_false_dic[row_no] = 0
+    else:
+        consecutive_false_dic[row_no] = 1
+    return
 
 def find_consecutive_false(group):
     if(len(group) > 1):
@@ -53,7 +56,7 @@ def find_consecutive_false(group):
             consecutive_false_dic[row2['notification_no']] = false_count
         #group.parallel_apply(lambda x: count_false(x),axis = 1)
     else:
-        group['notification_no'].apply(lambda x: make_zero(x))
+        group.apply(lambda x: make_single_label(x), axis=1)
         # for i in group['notification_no']:
         #     consecutive_false_dic[i] = 0
     return 0
