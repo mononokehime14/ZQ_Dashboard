@@ -11,8 +11,8 @@ import urllib.parse
 import sqlalchemy
 import timeit
 
-from data_manager import DBmanager,Cell
-from app import app
+from apps.data_manager import DBmanager,Cell
+from apps.app import app
 
 display_columns = ['notification_no','notification_date','contract_acct','cause_code','meter_no','prediction','consecutive_false']
 

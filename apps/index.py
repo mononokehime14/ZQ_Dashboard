@@ -6,9 +6,9 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 import pandas as pd
 import re
 
-from app import app
-from data_manager import DBmanager,Cell
-from pages import summary,search,records
+from apps.app import app
+from apps.data_manager import DBmanager,Cell
+from apps.pages import summary,search,records
 
 import sqlalchemy
 from sqlalchemy.orm import scoped_session, sessionmaker

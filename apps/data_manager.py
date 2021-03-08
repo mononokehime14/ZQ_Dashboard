@@ -37,7 +37,7 @@ def count_false(row):
     return 0
 
 def make_single_label(row):
-    if row['prediction']:
+    if row['prediction']: 
         consecutive_false_dic[row_no] = 0
     else:
         consecutive_false_dic[row_no] = 1

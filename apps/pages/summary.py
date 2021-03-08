@@ -14,10 +14,8 @@ import json
 import sqlalchemy
 import timeit
 
-from data_manager import DBmanager,Cell
-from app import app
-from settings import MAPBOX_ACCESS_TOKEN
-
+from apps.data_manager import DBmanager,Cell
+from apps.app import app
 
 
 def status_block(title, id_prefix, additional_classnames=""):

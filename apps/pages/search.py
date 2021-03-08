@@ -11,11 +11,9 @@ import datetime
 import timeit
 import sqlalchemy
 
-import sys
-sys.path.append("..")
-from data_manager import DBmanager,Cell
+from apps.data_manager import DBmanager, Cell
 
-from app import app
+from apps.app import app
 
 display_columns = ['notification_no','notification_date','prediction','cause_code']
 

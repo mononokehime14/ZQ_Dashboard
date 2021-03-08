@@ -10,4 +10,4 @@ def get_env_or_raise(name, default_value=None):
         return default_value
     return var
 
-BD_URI = get_env_or_raise('DB_URI')
+DB_URI = get_env_or_raise('DB_URI')
