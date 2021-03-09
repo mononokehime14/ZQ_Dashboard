@@ -597,8 +597,10 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
-        #start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        #end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        if type(start_date) == str:
+            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        if type(end_date) == str:
+            end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
         if(start_date < end_date):
             df = DB.query_in_timeperiod(start_date,end_date)
             # df = df[df['notification_date'] > start_date]

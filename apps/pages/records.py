@@ -58,14 +58,14 @@ def get_max_date():
     DB = DBmanager()
     max_date = DB.find_max_date()
     print(max_date)
-    print(type(max_date))
+    max_date = dt.datetime.strftime(max_date,"%Y-%m-%d")
+    print(max_date)
     return max_date
 
 def get_min_date():
     DB = DBmanager()
     min_date = DB.find_min_date()
-    print(min_date)
-    print(type(min_date))
+    min_date = dt.datetime.strftime(min_date,"%Y-%m-%d")
     return min_date
 
 def draw_upper_block():
@@ -277,8 +277,8 @@ def generate_little_chart(true_count, false_count):
     #State('memory-value','data')
 )
 
-def update_records(date,n_clicks,trace_option,download_clicks):
-    if(n_clicks>0) & (date is not None):
+def update_records(start_date,n_clicks,trace_option,download_clicks):
+    if(n_clicks>0) & (start_date is not None):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
         # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
@@ -287,7 +287,8 @@ def update_records(date,n_clicks,trace_option,download_clicks):
 
         # df['notification_date'] = pd.to_datetime(df['notification_date'])
         # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-        start_date = dt.datetime.strptime(date,"%Y-%m-%d")
+        if type(start_date) == str:
+            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
         if trace_option == 'last week':
             end_date = start_date - dt.timedelta(days=7)
         elif trace_option == 'last month':
@@ -329,7 +330,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         df = df.sort_values(by = 'consecutive_false',ascending= False)
         true_count = len(df[df['prediction'] == True].index)
         false_count = len(df.index) - true_count            
-        label = f'You have chosen date: {date}; Trace back to: {trace_option}'
+        label = f'You have chosen date: {start_date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):
             return [None,label,None,'There is no records on that day','']
         rate = int((true_count / (true_count + false_count)) * 100)
