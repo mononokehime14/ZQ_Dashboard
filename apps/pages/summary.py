@@ -628,7 +628,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # print(df[df['prediction'] > 1])
     # alarm_count = len(df[df['prediction'] == False])
     df_cause = 0 if df.empty else df.groupby('cause_code').notification_no.nunique()
-    cause_code_type = df_cause.index
+    cause_code_type = [] if df_cause == 0 else df_cause.index 
 
     starttime = timeit.default_timer()
     for i in range(len(cause_code_type)):
@@ -655,29 +655,33 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         label_list.append('meter_count')
         value_list.append(meter_count)
         total_count += meter_count
-        df_temp = df[df['cause_code'].str.contains('Meter',na=False, regex=True)]
-        df_for_bar= pd.concat([df_temp,df_for_bar])
+        if not df.empty:
+            df_temp = df[df['cause_code'].str.contains('Meter',na=False, regex=True)]
+            df_for_bar= pd.concat([df_temp,df_for_bar])
 
     if lc_n_clicks % 2 == 1:
         label_list.append('low_consumption')
         value_list.append(low_consumption)
         total_count += low_consumption
-        df_temp = df[df['cause_code'] == 'Low Consumption']
-        df_for_bar= pd.concat([df_temp,df_for_bar])
+        if not df.empty:
+            df_temp = df[df['cause_code'] == 'Low Consumption']
+            df_for_bar= pd.concat([df_temp,df_for_bar])
 
     if hc_n_clicks % 2 == 1:
         label_list.append('high_consumption')
         value_list.append(high_consumption)
         total_count += high_consumption
-        df_temp = df[df['cause_code'] == 'High Consumption']
-        df_for_bar= pd.concat([df_temp,df_for_bar])
+        if not df.empty:
+            df_temp = df[df['cause_code'] == 'High Consumption']
+            df_for_bar= pd.concat([df_temp,df_for_bar])
 
     if other_n_clicks % 2 == 1:
         label_list.append('other_cause')
         value_list.append(other_cause)
         total_count += other_cause
-        df_temp = df[(~(df['cause_code'].str.contains('Meter',na=False, regex=True))) & (df['cause_code'] != 'High Consumption') & (df['cause_code'] != 'Low Consumption')]
-        df_for_bar= pd.concat([df_temp,df_for_bar])
+        if not df.empty:
+            df_temp = df[(~(df['cause_code'].str.contains('Meter',na=False, regex=True))) & (df['cause_code'] != 'High Consumption') & (df['cause_code'] != 'Low Consumption')]
+            df_for_bar= pd.concat([df_temp,df_for_bar])
 
     if (meter_n_clicks % 2 == 0) & (lc_n_clicks % 2 == 0) & (hc_n_clicks % 2 == 0) & (other_n_clicks % 2 == 0):
         label_list = ['meter_count','low_consumption','high_consumption','other_cause']

@@ -327,26 +327,27 @@ def update_records(start_date,n_clicks,trace_option,download_clicks):
         # df = pd.concat([df,dff])     
         DB = DBmanager()
         #DB.update_consecutive_false()
-        df = DB.trace_records(start_date,end_date)    
-        drop_columns = list(set(df.columns) - set(display_columns))
-        df.drop(drop_columns,axis=1,inplace= True)
-        df = df.sort_values(by = 'consecutive_false',ascending= False)
-        true_count = len(df[df['prediction'] == True].index)
-        false_count = len(df.index) - true_count            
+        df = DB.trace_records(start_date,end_date)  
         label = f'You have chosen date: {start_date}; Trace back to: {trace_option}'
-        if(true_count + false_count == 0):
+        if df is not None:  
+            drop_columns = list(set(df.columns) - set(display_columns))
+            df.drop(drop_columns,axis=1,inplace= True)
+            df = df.sort_values(by = 'consecutive_false',ascending= False)
+            true_count = len(df[df['prediction'] == True].index)
+            false_count = len(df.index) - true_count            
+            rate = int((true_count / (true_count + false_count)) * 100)
+            fig = generate_little_chart(true_count,false_count)
+            chart_content = [dcc.Graph(
+                figure=fig,
+                style={'width': '48px','height':'48px'},
+            )]
+            csv_string = df.to_csv(index=False, encoding='utf-8')
+            csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
+            print("All things acomplished, used time:", timeit.default_timer() - starttime)
+            #df.to_json(orient='split',date_format='iso')
+            return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string]
+        else:
             return [None,label,None,'There is no records on that day','']
-        rate = int((true_count / (true_count + false_count)) * 100)
-        fig = generate_little_chart(true_count,false_count)
-        chart_content = [dcc.Graph(
-            figure=fig,
-            style={'width': '48px','height':'48px'},
-        )]
-        csv_string = df.to_csv(index=False, encoding='utf-8')
-        csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
-        print("All things acomplished, used time:", timeit.default_timer() - starttime)
-        #df.to_json(orient='split',date_format='iso')
-        return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string]
     return [None,'Select a date to check its records',None,'','']
 
 @app.callback(
