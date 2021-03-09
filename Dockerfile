@@ -6,12 +6,18 @@ COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 
-COPY /apps /apps
+COPY apps /srv/apps
 
-WORKDIR /
+WORKDIR /srv
 
 EXPOSE 8425
 
-ENV MAPBOX_ACCESS_TOKEN pk.eyJ1IjoidGFuanVua2Fpc3BkaWdpdGFsIiwiYSI6ImNrOHBqODR0bzFrcm4zZ3FveGgwdjBpeDQifQ.TtZsio5IHPT7b1TCpvCJyQ
+ENV DB_NAME ''
+ENV DB_USER ''
+ENV DB_HOST ''
+ENV DB_PASSWORD ''
 
 CMD ["python", "-m", "apps.index"]
+COPY alembic /srv/alembic
+COPY alembic.ini /srv/alembic.ini
+COPY scripts /srv/scripts

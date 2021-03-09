@@ -1,5 +1,5 @@
 REPO=porter.azurecr.io/porter/zq-dashboard
-TAG=0.1.0
+TAG=0.1.2
 TEST_POD_NAME=zq-dashboard
 
 .PHONY: deploy
@@ -9,7 +9,10 @@ test:
 	docker run -it --rm \
 	--name $(TEST_POD_NAME) \
 	-p 8425:8425 \
-	-e DB_URI=postgresql://porter:porter@$$IP/dash_db \
+	-e DB_NAME=dash_db \
+	-e DB_USER=porter \
+	-e DB_PASSWORD=porter \
+	-e DB_HOST=$$IP \
 	-v `pwd`/apps:/apps \
 	$(REPO):$(TAG) \
 	python -m apps.index
@@ -18,8 +21,7 @@ db-test:
 	export IP=`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' porter-db`; \
 	docker run -it --rm --name zq-dash-db-test \
 	-p 8425:8425 \
-	-e DB_URI=postgresql://porter:porter@$$IP/dash_db \
-	-e DB_NAME=porter \
+	-e DB_NAME=dash_db \
 	-e DB_USER=porter \
 	-e DB_PASSWORD=porter \
 	-e DB_HOST=$$IP \

@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zq-result-dashboard
+  labels:
+    app: zq-result-dashboard
+  namespace: exp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zq-result-dashboard
+  template:
+    metadata:
+      labels:
+        app: zq-result-dashboard
+    spec:
+      initContainers:
+      - name: alembic
+        image: porter.azurecr.io/porter/zq-dashboard:0.1.2
+        imagePullPolicy: Always
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgresql-password
+              name: porter-db-ext-postgresql
+        - name: DB_HOST
+          value: porter-db-ext-postgresql.exp.svc.cluster.local
+        - name: DB_USER
+          value: postgres
+        - name: DB_NAME
+          value: dash_db
+        command:
+        - alembic
+        - upgrade
+        - head
+
+      containers:
+      - name: zq-result-dashboard
+        image: porter.azurecr.io/porter/zq-dashboard:0.1.2
+        imagePullPolicy: Always
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgresql-password
+              name: porter-db-ext-postgresql
+        - name: DB_HOST
+          value: porter-db-ext-postgresql.exp.svc.cluster.local
+        - name: DB_USER
+          value: postgres
+        - name: DB_NAME
+          value: dash_db
+
+        livenessProbe:
+          tcpSocket:
+            port: 8425
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8425
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        ports:
+        - name: http
+          containerPort: 8425
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: zq-result-dashboard 
+  namespace: exp
+spec:
+  type: ClusterIP
+  selector:
+    app: zq-result-dashboard
+  ports:
+    - name: http
+      nodePort: null
+      port: 8425
+      targetPort: 8425
+      protocol: TCP
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: zq-result-dashboard
+  namespace: exp
+  labels:
+    app: zq-result-dashboard
+spec:
+  rules:
+    - host: zq-dashboard.dev.data.in.spdigital.sg
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: zq-result-dashboard
+              servicePort: http
