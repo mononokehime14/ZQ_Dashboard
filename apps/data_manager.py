@@ -154,7 +154,6 @@ class DBmanager:
         acct_list = pd.concat([df_at_that_date['meter_no'], df_at_that_date['contract_acct']])
         acct_list = acct_list.tolist()
         df= pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date <= start_date, Cell.notification_date >= end_date,Cell.consecutive_false > 0,(Cell.meter_no.in_(acct_list) | Cell.contract_acct.in_(acct_list)))).statement, session.bind)
-
         #df['notification_date'] = df['notification_date'].dt.to_pydatetime()
         #df['notification_date'] = pd.to_datetime(df['notification_date'])
         df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
@@ -162,6 +161,8 @@ class DBmanager:
         for n, g in df.groupby(['meter_no', 'contract_acct']):
             _  = find_consecutive_false(g)
             group_dfs.append(_)
+        if not group_dfs:
+            return None
         df1 = pd.concat(group_dfs)
         df1 = df1[df1['notification_date'] == start_date]
         df_sup = pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date == start_date, Cell.consecutive_false == 0)).statement,session.bind)
