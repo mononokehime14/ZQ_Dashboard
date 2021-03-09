@@ -32,7 +32,7 @@ def draw_datatable():
                 selected_rows=[],
                 page_action="native",
                 page_current= 0,
-                page_size= 10,
+                page_size= 20,
                 style_data={
                     'width': '10%',
                     'maxWidth': '100px',
@@ -54,6 +54,20 @@ def draw_datatable():
             ),
         ]
     )
+def get_max_date():
+    DB = DBmanager()
+    max_date = DB.find_max_date()
+    print(max_date)
+    max_date = dt.datetime.strftime(max_date,"%Y-%m-%d")
+    print(max_date)
+    return max_date
+
+def get_min_date():
+    DB = DBmanager()
+    min_date = DB.find_min_date()
+    min_date = dt.datetime.strftime(min_date,"%Y-%m-%d")
+    return min_date
+
 def draw_upper_block():
     return html.Div(
         [
@@ -67,16 +81,16 @@ def draw_upper_block():
                                         [
                                             dcc.DatePickerSingle(
                                                 id='date_selector_single',
-                                                min_date_allowed=dt.date(2019, 4, 17),
-                                                max_date_allowed=dt.date(2021, 1, 8),
-                                                initial_visible_month=dt.date(2021, 1, 8),
-                                                date=dt.date(2021, 1, 8),
+                                                min_date_allowed=get_min_date(),
+                                                max_date_allowed=get_max_date(),
+                                                initial_visible_month=get_max_date(),
+                                                date=get_max_date(),
                                                 className = 'datepicker_for_records_page',
                                                 style = {'width':'100px','height':'44px'},
                                             ),
                                         ],
                                         id = 'date_selector_div',
-                                        className = 'col-sm-3 col-md-3 col-lg-3 u-cell',
+                                        className = 'col-sm-3 col-md-3 col-lg-3 col-xl-3 u-cell',
                                     ),
                                     html.Div(
                                         [
@@ -94,7 +108,7 @@ def draw_upper_block():
                                             ),
                                         ],
                                         id = 'consecutive_false_trace_div',
-                                        className  = 'col-sm-3 col-md-3 col-lg-3 u-cell',
+                                        className  = 'col-sm-3 col-md-3 col-lg-3 col-xl-3 u-cell',
                                     ),
                                     html.Div(
                                         [
@@ -107,7 +121,7 @@ def draw_upper_block():
                                             ),
                                         ],
                                         id = 'date_selector_button_div',
-                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 col-xl-2 u-cell',
                                     ),
                                     html.Div(
                                         [
@@ -128,7 +142,7 @@ def draw_upper_block():
                                             ),
                                         ],
                                         id = 'csv_download_button_div',
-                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 col-xl-2 u-cell',
                                     ),
                                 ],
                                 className = 'u-grid',
@@ -147,7 +161,7 @@ def draw_upper_block():
                         style = {'display':'block','height':'100%'}
                     ),
                 ],
-                className = 'col-sm-6 col-md-6 col-lg-6 u-cell',
+                className = 'col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell',
             ),
             html.Div(
                 [
@@ -160,13 +174,13 @@ def draw_upper_block():
 
                                         ],
                                         id = 'little_chart',
-                                        className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
+                                        className = 'col-sm-2 col-md-2 col-lg-2 col-xl-2 u-cell',
                                     ),
                                     html.Div(
                                         [
                                             html.P("", className="h4",id = 'little_chart_label')
                                         ],
-                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 u-cell',
+                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 push-xl-2 col-xl-8 u-cell',
                                         style = {'display':'flex','text-align':'center'}
                                     ),
                                 ],
@@ -177,7 +191,7 @@ def draw_upper_block():
                         style = {'text-align':'right'}
                     ),
                 ],
-                className = 'col-sm-3  col-md-3  col-lg-3  u-cell',
+                className = 'col-sm-3  col-md-3  col-lg-3 col-xl-3 u-cell',
             ),
         ],
         className = 'lm--card u-pv2 u-grid',
@@ -218,7 +232,7 @@ layout = [
                         id = 'check_records_display_block',
                     ),
                 ],
-                className="mainContent u-ph1@md u-ph3@lg",
+                className="mainContent u-ph1@md u-ph3@lg u-ph5@xl",
             ),
         ],
     ),
@@ -263,8 +277,8 @@ def generate_little_chart(true_count, false_count):
     #State('memory-value','data')
 )
 
-def update_records(date,n_clicks,trace_option,download_clicks):
-    if(n_clicks>0) & (date is not None):
+def update_records(start_date,n_clicks,trace_option,download_clicks):
+    if(n_clicks>0) & (start_date is not None):
         #df = pd.read_json(df,orient="split")
         starttime = timeit.default_timer()
         # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
@@ -273,7 +287,8 @@ def update_records(date,n_clicks,trace_option,download_clicks):
 
         # df['notification_date'] = pd.to_datetime(df['notification_date'])
         # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-        start_date = dt.datetime.strptime(date,"%Y-%m-%d")
+        if type(start_date) == str:
+            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
         if trace_option == 'last week':
             end_date = start_date - dt.timedelta(days=7)
         elif trace_option == 'last month':
@@ -283,7 +298,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         elif trace_option == 'last year':
             end_date = start_date - dt.timedelta(days=365)
         elif trace_option == 'all time':
-            end_date = dt.datetime(2019, 4, 17)
+            end_date = get_min_date()
         else:
             return [None,'You have not chosen trace period',None,'','']
 
@@ -312,9 +327,10 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         df = DB.trace_records(start_date,end_date)    
         drop_columns = list(set(df.columns) - set(display_columns))
         df.drop(drop_columns,axis=1,inplace= True)
+        df = df.sort_values(by = 'consecutive_false',ascending= False)
         true_count = len(df[df['prediction'] == True].index)
         false_count = len(df.index) - true_count            
-        label = f'You have chosen date: {date}; Trace back to: {trace_option}'
+        label = f'You have chosen date: {start_date}; Trace back to: {trace_option}'
         if(true_count + false_count == 0):
             return [None,label,None,'There is no records on that day','']
         rate = int((true_count / (true_count + false_count)) * 100)
