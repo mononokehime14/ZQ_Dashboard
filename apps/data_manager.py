@@ -7,7 +7,7 @@ from sqlalchemy import create_engine,String,Column,or_,and_,update,asc
 from sqlalchemy.orm import sessionmaker,Query
 from sqlalchemy.types import Integer,String,Text,DateTime,Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import exists
+from sqlalchemy.sql import exists, func
 import datetime as dt
 import timeit
 from pandarallel import pandarallel
@@ -68,27 +68,27 @@ class DBmanager:
             session.close()
         return 0
     
-    def update_consecutive_false(self):
-        session = self.session
-        starttime = timeit.default_timer()
-        column_exist = session.query(session.query(Cell.consecutive_false).exists()).scalar()
-        if column_exist:
-            #new_data = session.query(Cell).filter(Cell.consecutive_false == None).all()
-            df_nan_in_cf = pd.read_sql(session.query(Cell).filter(Cell.consecutive_false == None).statement, session.bind)
-            print("Getting target list, used time:", timeit.default_timer() - starttime)
-            if not df_nan_in_cf.empty:
-                acct_list = pd.concat([df_nan_in_cf['meter_no'], df_nan_in_cf['contract_acct']])
-                acct_list = acct_list.tolist()
-                #no_list = df_nan_in_cf['notification_no'].tolist()
-                df = pd.read_sql(session.query(Cell).filter(or_(Cell.meter_no.in_(acct_list),Cell.contract_acct.in_(acct_list))).statement, session.bind)
-                print("Loading done, used time:", timeit.default_timer() - starttime)
-                # df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
-                group_dfs = []
-                for n, g in df.groupby(['meter_no', 'contract_acct']):
-                    _  = find_consecutive_false(g)
-                    group_dfs.append(_)
-                df = pd.concat(group_dfs)
-                print("Calculation done, used time:", timeit.default_timer() - starttime)
+    # def update_consecutive_false(self):
+    #     session = self.session
+    #     starttime = timeit.default_timer()
+    #     column_exist = session.query(session.query(Cell.consecutive_false).exists()).scalar()
+    #     if column_exist:
+    #         #new_data = session.query(Cell).filter(Cell.consecutive_false == None).all()
+    #         df_nan_in_cf = pd.read_sql(session.query(Cell).filter(Cell.consecutive_false == None).statement, session.bind)
+    #         print("Getting target list, used time:", timeit.default_timer() - starttime)
+    #         if not df_nan_in_cf.empty:
+    #             acct_list = pd.concat([df_nan_in_cf['meter_no'], df_nan_in_cf['contract_acct']])
+    #             acct_list = acct_list.tolist()
+    #             #no_list = df_nan_in_cf['notification_no'].tolist()
+    #             df = pd.read_sql(session.query(Cell).filter(or_(Cell.meter_no.in_(acct_list),Cell.contract_acct.in_(acct_list))).statement, session.bind)
+    #             print("Loading done, used time:", timeit.default_timer() - starttime)
+    #             # df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
+    #             group_dfs = []
+    #             for n, g in df.groupby(['meter_no', 'contract_acct']):
+    #                 _  = find_consecutive_false(g)
+    #                 group_dfs.append(_)
+    #             df = pd.concat(group_dfs)
+    #             print("Calculation done, used time:", timeit.default_timer() - starttime)
                 # try:
                 #     for key,value in consecutive_false_dic.items():
                 #         user = session.query(Cell).filter(Cell.notification_no == key).update({"consecutive_false":value})
@@ -102,44 +102,44 @@ class DBmanager:
                 # finally:
                 #     session.close()
                 # print("Uploading done, used time:", timeit.default_timer() - starttime)
-        else:
-            self.update_consecutive_false_for_whole()
-        return 0
+        # else:
+        #     self.update_consecutive_false_for_whole()
+        # return 0
 
-    def update_consecutive_false_for_whole(self):
-        engine = self.engine
-        print("Whole table update")
-        starttime = timeit.default_timer()
-        cwd = os.getcwd()  # Get the current working directory (cwd)
-        files = os.listdir(cwd)  # Get all the files in that directory
-        print("Files in %r: %s" % (cwd, files))
-        df = pd.read_csv('apps/data/test_incremental.csv',parse_dates=['notification_date'],dayfirst=True)
-        #df = pd.read_sql_table('notificationlist',con = engine)
-        df['notification_date'] = pd.to_datetime(df['notification_date'])
-        print("Loading target list done, used time:", timeit.default_timer() - starttime)
-        starttime = timeit.default_timer()
-        group_dfs = []
-        for n, g in df.groupby(['meter_no', 'contract_acct']):
-            _  = find_consecutive_false(g)
-            group_dfs.append(_)
-        df = pd.concat(group_dfs)
-        print("Calculation done, used time:", timeit.default_timer() - starttime)
+    # def update_consecutive_false_for_whole(self):
+    #     engine = self.engine
+    #     print("Whole table update")
+    #     starttime = timeit.default_timer()
+    #     cwd = os.getcwd()  # Get the current working directory (cwd)
+    #     files = os.listdir(cwd)  # Get all the files in that directory
+    #     print("Files in %r: %s" % (cwd, files))
+    #     df = pd.read_csv('apps/data/test_incremental.csv',parse_dates=['notification_date'],dayfirst=True)
+    #     #df = pd.read_sql_table('notificationlist',con = engine)
+    #     df['notification_date'] = pd.to_datetime(df['notification_date'])
+    #     print("Loading target list done, used time:", timeit.default_timer() - starttime)
+    #     starttime = timeit.default_timer()
+    #     group_dfs = []
+    #     for n, g in df.groupby(['meter_no', 'contract_acct']):
+    #         _  = find_consecutive_false(g)
+    #         group_dfs.append(_)
+    #     df = pd.concat(group_dfs)
+    #     print("Calculation done, used time:", timeit.default_timer() - starttime)
 
-        starttime = timeit.default_timer()
-        session = self.session
-        try:
-            for row in session.query(Cell).all():
-                row.consecutive_false = consecutive_false_dic[row.notification_no]
-            session.commit()
-        except:
-            session.rollback()
-            print("We encouter unknown situation")
-            raise
-        finally:
-            session.close()
-        print("Uploading done, used time:", timeit.default_timer() - starttime)
+    #     starttime = timeit.default_timer()
+    #     session = self.session
+    #     try:
+    #         for row in session.query(Cell).all():
+    #             row.consecutive_false = consecutive_false_dic[row.notification_no]
+    #         session.commit()
+    #     except:
+    #         session.rollback()
+    #         print("We encouter unknown situation")
+    #         raise
+    #     finally:
+    #         session.close()
+    #     print("Uploading done, used time:", timeit.default_timer() - starttime)
 
-        return df
+    #     return df
     
     def query(self,input_text):
         session = self.session
@@ -191,6 +191,14 @@ class DBmanager:
     def count_false(self):
         session = self.session
         return len(session.query(Cell).filter(Cell.prediction == False).all())
+
+    def find_max_date(self):
+        session = self.session
+        return session.query(func.max(Cell.notification_date)).scalar()
+
+    def find_min_date(self):
+        session = self.session
+        return session.query(func.min(Cell.notification_date)).scalar()
 
         
 

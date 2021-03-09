@@ -14,8 +14,9 @@ import json
 import sqlalchemy
 import timeit
 
-from apps.data_manager import DBmanager,Cell
+from apps.data_manager import DBmanager, Cell
 from apps.app import app
+from apps.pages.records import get_max_date, get_min_date
 
 
 def status_block(title, id_prefix, additional_classnames=""):
@@ -218,11 +219,11 @@ def manipulation_bar():
                 [
                     dcc.DatePickerRange(
                         id='date-picker-range',
-                        min_date_allowed=dt.date(2019, 4, 17),
-                        max_date_allowed=dt.date(2021, 1, 8),
-                        initial_visible_month=dt.date(2021, 1, 8),
-                        end_date=dt.date(2020, 4, 17),
-                        start_date = dt.date(2019,4,17),
+                        min_date_allowed=get_min_date(),
+                        max_date_allowed=get_max_date(),
+                        initial_visible_month=get_max_date(),
+                        end_date=get_max_date(),
+                        start_date = get_min_date(),
                         className = 'datepicker_for_summary_page',
                         display_format = 'Do YYYY',
                         updatemode = 'bothdates',
@@ -592,12 +593,12 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     starttime = timeit.default_timer()
     #DB.test_add_multiple()
     #DB.update_consecutive_false()
-    print("Upadated DB, used time:", timeit.default_timer() - starttime)
+    # print("Upadated DB, used time:", timeit.default_timer() - starttime)
 
     starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
-        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        #start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        #end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
         if(start_date < end_date):
             df = DB.query_in_timeperiod(start_date,end_date)
             # df = df[df['notification_date'] > start_date]
