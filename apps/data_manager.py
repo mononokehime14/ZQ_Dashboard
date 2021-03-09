@@ -55,10 +55,10 @@ class DBmanager:
         session = self.session
         try:
             session.add_all([
-                Cell(notification_type = 'ZQ',notification_no = 'qwer3',notification_date = '2020-04-12 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= True),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer4',notification_date = '2020-04-13 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer1',notification_date = '2020-04-10 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer2',notification_date = '2020-04-11 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer3',notification_date = '2021-01-08 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= True),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer4',notification_date = '2021-01-09 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer1',notification_date = '2021-01-10 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer2',notification_date = '2021-01-11 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
             ])
             session.commit()
         except:

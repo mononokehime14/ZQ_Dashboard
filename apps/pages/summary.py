@@ -228,6 +228,11 @@ def manipulation_bar():
                         display_format = 'Do YYYY',
                         updatemode = 'bothdates',
                     ),
+                    dcc.Interval(
+                        id='date_selector_interval',
+                        interval=1*1000, # in milliseconds
+                        n_intervals=0
+                    ),
                 ],
                 className = 'u-grid-center',
                 style={'width':'100%'}
@@ -702,7 +707,16 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     output.append(latest)
     return output
 
+@app.callback(
+    [Output('date-picker-range','max_date_allowed'),
+    Output('date-picker-range','min_date_allowed'),],
+    Input('date_selector_interval','n_intervals'),
+)
 
+def update_max_min_date(n_intervals):
+    max_date = get_max_date()
+    min_date = get_min_date()
+    return [max_date,min_date]
 #this callback uses date picker range to filte data
 # @app.callback(
 #     Output('intermediate-value', 'data'),

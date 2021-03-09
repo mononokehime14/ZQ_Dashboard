@@ -88,6 +88,11 @@ def draw_upper_block():
                                                 className = 'datepicker_for_records_page',
                                                 style = {'width':'100px','height':'44px'},
                                             ),
+                                            dcc.Interval(
+                                                id='date_selector_interval',
+                                                interval=1*1000, # in milliseconds
+                                                n_intervals=0
+                                            ),
                                         ],
                                         id = 'date_selector_div',
                                         className = 'col-sm-3 col-md-3 col-lg-3 col-xl-3 u-cell',
@@ -346,6 +351,14 @@ def update_records(start_date,n_clicks,trace_option,download_clicks):
         return [df.to_dict('records'),label,chart_content,f'True Prediction Rate: {rate}%',csv_string]
     return [None,'Select a date to check its records',None,'','']
 
+@app.callback(
+    [Output('date_selector_single','max_date_allowed'),
+    Output('date_selector_single','min_date_allowed')],
+    Input('date_selector_interval','n_intervals'),
+)
+
+def update_max_min_date(n_intervals):
+    return [get_max_date(),get_min_date()]
 # @app.callback(
 #     Output('download-link', 'href'),
 #     Input('csv_download_button','n_clicks'),
