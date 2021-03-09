@@ -57,9 +57,7 @@ def draw_datatable():
 def get_max_date():
     DB = DBmanager()
     max_date = DB.find_max_date()
-    print(max_date)
     max_date = dt.datetime.strftime(max_date,"%Y-%m-%d")
-    print(max_date)
     return max_date
 
 def get_min_date():

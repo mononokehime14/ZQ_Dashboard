@@ -197,11 +197,17 @@ class DBmanager:
 
     def find_max_date(self):
         session = self.session
-        return session.query(func.max(Cell.notification_date)).scalar()
+        result = session.query(func.max(Cell.notification_date)).scalar()
+        if result is None:
+            result = dt.datetime.now()
+        return result
 
     def find_min_date(self):
         session = self.session
-        return session.query(func.min(Cell.notification_date)).scalar()
+        result = session.query(func.min(Cell.notification_date)).scalar()
+        if result is None:
+            result = dt.datetime.now()
+        return result
 
         
 
