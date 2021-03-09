@@ -308,7 +308,7 @@ def update_records(date,n_clicks,trace_option,download_clicks):
         # df = df[(df['notification_date'] == start_date) & (df['consecutive_false'] == 0)]
         # df = pd.concat([df,dff])     
         DB = DBmanager()
-        DB.update_consecutive_false()
+        #DB.update_consecutive_false()
         df = DB.trace_records(start_date,end_date)    
         drop_columns = list(set(df.columns) - set(display_columns))
         df.drop(drop_columns,axis=1,inplace= True)

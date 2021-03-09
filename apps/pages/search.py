@@ -221,7 +221,7 @@ def update_search_result(n_clicks,input_value):
         #engine = DB.engine
         #DB.test_add_multiple()
         #DB.start_over()
-        DB.update_consecutive_false()
+        #DB.update_consecutive_false()
 
         #df = pd.read_sql_table('notificationlist',con = engine)
         #df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
