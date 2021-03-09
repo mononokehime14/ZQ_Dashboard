@@ -154,16 +154,20 @@ class DBmanager:
         acct_list = pd.concat([df_at_that_date['meter_no'], df_at_that_date['contract_acct']])
         acct_list = acct_list.tolist()
         df= pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date <= start_date, Cell.notification_date >= end_date,Cell.consecutive_false > 0,(Cell.meter_no.in_(acct_list) | Cell.contract_acct.in_(acct_list)))).statement, session.bind)
-        consecutive_false_dic.clear()
         #df['notification_date'] = df['notification_date'].dt.to_pydatetime()
         #df['notification_date'] = pd.to_datetime(df['notification_date'])
         df.sort_values(by = 'notification_date',ascending=True,inplace = True,axis =0)
-        df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
-        df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
-        df = df[df['notification_date'] == start_date]
+        # df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
+        group_dfs = []
+        for n, g in df.groupby(['meter_no', 'contract_acct']):
+            _  = find_consecutive_false(g)
+            group_dfs.append(_)
+        df1 = pd.concat(group_dfs)
+        # df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
+        df1 = df1[df1['notification_date'] == start_date]
         df_sup = pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date == start_date, Cell.consecutive_false == 0)).statement,session.bind)
-        df = pd.concat([df,df_sup])
-        return df
+        df2 = pd.concat([df1, df_sup])
+        return df2
     
     def query_in_timeperiod(self,start,end):
         session = self.session
