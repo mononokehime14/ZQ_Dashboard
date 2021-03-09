@@ -55,10 +55,10 @@ class DBmanager:
         session = self.session
         try:
             session.add_all([
-                Cell(notification_type = 'ZQ',notification_no = 'qwer3',notification_date = '2021-01-08 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= True),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer4',notification_date = '2021-01-09 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer1',notification_date = '2021-01-10 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
-                Cell(notification_type = 'ZQ',notification_no = 'qwer2',notification_date = '2021-01-11 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer3',notification_date = '2021-01-08 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= True,consecutive_false = 0),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer4',notification_date = '2021-01-09 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False,consecutive_false = 1),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer1',notification_date = '2021-01-10 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False,consecutive_false = 2),
+                Cell(notification_type = 'ZQ',notification_no = 'qwer2',notification_date = '2021-01-11 00:00:00',contract_acct = 'qwer',cause_code = 'Meter Stopped/Stuck',meter_no = 'qwer',prediction= False,consecutive_false = 3),
             ])
             session.commit()
         except:
@@ -201,14 +201,14 @@ class DBmanager:
         result = session.query(func.max(Cell.notification_date)).scalar()
         if result is None:
             result = dt.datetime.now()
-        return result
+        return dt.datetime.strftime(result,"%Y-%m-%d")
 
     def find_min_date(self):
         session = self.session
         result = session.query(func.min(Cell.notification_date)).scalar()
         if result is None:
             result = dt.datetime.now()
-        return result
+        return dt.datetime.strftime(result,"%Y-%m-%d")
 
         
 

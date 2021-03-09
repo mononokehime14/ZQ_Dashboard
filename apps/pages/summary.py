@@ -39,7 +39,7 @@ def status_block(title, id_prefix, additional_classnames=""):
                         [
                             html.Div(html.P(title, className="h4")),
                         ],
-                        className="lm--card-item u-grid",
+                        className="lm--card-item u-grid-center",
                     ),
                     html.Div(
                         [
@@ -70,7 +70,7 @@ def status_block(title, id_prefix, additional_classnames=""):
                                         style = {'text-align':'left'},
                                     ),                                   
                                 ],
-                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                                className="lm--card-item col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell",
                             ),
                             html.Div(
                                 [
@@ -99,37 +99,37 @@ def status_block(title, id_prefix, additional_classnames=""):
                                         style = {'text-align':'left'},
                                     ),  
                                 ],
-                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                                className="lm--card-item col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell",
                             ),
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.Button(
-                                                [
-                                                    html.Div(
-                                                        [
-                                                            html.Div([html.P("Attention Needed", className="h5",style={'color':'#4F5A60'})]),
-                                                            html.Div(
-                                                                [
-                                                                    html.Span(id=f"{id_prefix}_dot_indicator", className="alert-dot"),
-                                                                    html.Span(id=f"{id_prefix}_alert_value", className="mini_container_value",style={'color':'#4F5A60'}),
-                                                                ],
-                                                                style = {'text-align':'left'},
-                                                            ),
-                                                        ],
-                                                    ),
-                                                ],
-                                                id = 'alert_button',
-                                                n_clicks = 0,
-                                                className = 'transparent_button',
-                                            ),
-                                        ],
-                                        style = {'text-align':'left'},
-                                    ),
-                                ],
-                                className="lm--card-item col-sm-auto col-md-auto u-pb0 u-cell",
-                            ),
+                            # html.Div(
+                            #     [
+                            #         html.Div(
+                            #             [
+                            #                 html.Button(
+                            #                     [
+                            #                         html.Div(
+                            #                             [
+                            #                                 html.Div([html.P("Attention Needed", className="h5",style={'color':'#4F5A60'})]),
+                            #                                 html.Div(
+                            #                                     [
+                            #                                         html.Span(id=f"{id_prefix}_dot_indicator", className="alert-dot"),
+                            #                                         html.Span(id=f"{id_prefix}_alert_value", className="mini_container_value",style={'color':'#4F5A60'}),
+                            #                                     ],
+                            #                                     style = {'text-align':'left'},
+                            #                                 ),
+                            #                             ],
+                            #                         ),
+                            #                     ],
+                            #                     id = 'alert_button',
+                            #                     n_clicks = 0,
+                            #                     className = 'transparent_button',
+                            #                 ),
+                            #             ],
+                            #             style = {'text-align':'left'},
+                            #         ),
+                            #     ],
+                            #     className="lm--card-item col-sm-auto col-md-auto u-pb0 u-cell",
+                            # ),
                         ],
                         className = 'u-grid',
                         style={'width':'100%'}
@@ -142,8 +142,8 @@ def status_block(title, id_prefix, additional_classnames=""):
                                         [
                                             html.Button(
                                                 [
-                                                    html.Div(
-                                                        [
+                                                    # html.Div(
+                                                    #     [
                                                             html.Div([html.P("High Consumption", className="h5",style={'color':'#4F5A60'})]),
                                                             html.Div(
                                                                 [
@@ -152,8 +152,8 @@ def status_block(title, id_prefix, additional_classnames=""):
                                                                 ],
                                                                 style = {'text-align':'left'},
                                                             ),
-                                                        ],
-                                                    ),
+                                                    #     ],
+                                                    # ),
                                                 ],
                                                 id = 'high_consumption_button',
                                                 n_clicks = 0,
@@ -163,7 +163,7 @@ def status_block(title, id_prefix, additional_classnames=""):
                                         style = {'text-align':'left'},
                                     ),
                                 ],
-                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                                className="lm--card-item col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell",
                             ),
                             html.Div(
                                 [
@@ -192,14 +192,25 @@ def status_block(title, id_prefix, additional_classnames=""):
                                         style = {'text-align':'left'},
                                     ),
                                 ],
-                                className="lm--card-item col-sm-4 col-md-4 u-cell",
+                                className="lm--card-item col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell",
                             ),
                         ],
                         className='u-grid',
                         style={'width':'100%'}
                     ),
                 ],
-                className="col-sm-7 col-md-7 col-lg-7 u-cell",
+                className="col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell",
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        [],
+                        id="reduced_number_chart_div",
+                        className="lm--card-item col u-cell",
+                        style={"position": "relative", "min-width": "138px", "max-width": "188px",'text-align':'center'},
+                    ),
+                ],
+                className = 'col-sm-3 col-md-3 col-lg-3 u-cell',
             ),
         ],
         className="lm--card u-grid" + additional_classnames,
@@ -230,60 +241,13 @@ def manipulation_bar():
                     ),
                     dcc.Interval(
                         id='date_selector_interval',
-                        interval=600*1000, # in milliseconds
+                        interval=5*1000, # in milliseconds
                         n_intervals=0
                     ),
                 ],
                 className = 'u-grid-center',
                 style={'width':'100%'}
             ),
-            # html.Div(
-            #     [
-            #         html.Div(
-            #             [
-            #                 html.Div(
-            #                     [
-            #                         dcc.Input(
-            #                             type="text",
-            #                             placeholder="consecutive_FALSE",
-            #                             id = 'add_column_input',
-            #                             className="input",
-            #                         ),
-            #                     ],
-            #                     className = 'col-sm-6 col-md-9 col-lg-8 u-cell',
-            #                 ),
-            #                 html.Div(
-            #                     [
-            #                         html.Button('Add', 
-            #                         id = 'add_column_button', 
-            #                         className='lm--button--secondary u-pv2',
-            #                         ),
-            #                     ],                            
-            #                     className = 'col-sm-6 col-md-2 col-lg-3 u-cell',
-            #                 ),
-
-            #             ],
-            #             className = 'u-grid',
-            #         ),
-            #     ],
-            #     className = 'u-pv2',
-            #     style={'height':'100%','display':'block'}
-            # ),
-            # html.Div(
-            #     [
-            #         html.Button(
-            #             [
-            #                 html.P('Save Changes',className = 'h4'),
-            #             ],
-            #             id = 'save_change_button',
-            #             className='lm--button--primary',
-            #         ),
-            #     ],
-            #     # className = 'u-grid u-grid-center@md u-grid-center@sm u-pv2',
-            #     className = 'u-pv2',
-            #     style={'height':'100%','display':'block'}
-            # ),
-
         ],
         className = 'lm--card',
         style={'text-align':'center','display':'block'}
@@ -384,6 +348,18 @@ layout = [
                                 # style = {'max-height':'300px'},
                                 className='u-pt0 u-pb1 u-ph0@sm u-ph1@md u-pr1@lg',
                             ),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+
+                                        ],
+                                        id = 'prediction-time graph div',
+                                        style = {'width':'100%'},
+                                    ),
+                                ],
+                                className='u-pt2 u-pb1 u-ph0@sm u-ph1@md u-pr1@lg lm--card',
+                            ),
                         ],
                         className = 'col-sm-6 col-md-9 col-md-8 u-cell',
                         # style={'display':'block'},
@@ -452,8 +428,7 @@ def generate_donut_chart(label_list,value_list):
     )
     return fig
 
-
-def generate_substation_health_card_values(fig, total_count, ok_count, alarm_count,infected,inactive,towatch):
+def generate_substation_health_card_values(fig, total_count, ok_count,infected,inactive,towatch):
     return [
         dcc.Graph(
             id="source_stations_chart",
@@ -469,7 +444,7 @@ def generate_substation_health_card_values(fig, total_count, ok_count, alarm_cou
             ],
             className="mini_container_data_label"
         ),
-    ], "inactive-dot" if alarm_count==0 else "alert-dot", [f"{ok_count}"], [f"{alarm_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
+    ], [f"{ok_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
 def draw_consecutive_true_bar(df):
 
@@ -531,6 +506,137 @@ def draw_consecutive_true_bar(df):
         ),
     ]
 
+def draw_prediction_time_bar_graph(df,start_date,end_date):
+    if df.empty:
+        return None
+    time_width = end_date - start_date
+    print(time_width)
+    if time_width <= dt.timedelta(days=12):
+        time_width = dt.timedelta(days=1)
+    else:
+        time_width = time_width / 12
+    print(time_width)
+    dt_pointer = start_date
+    t_dict = {}
+    f_dict = {}
+    while(dt_pointer < end_date):
+        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
+        total_count = len(df_p)   
+        if total_count != 0:
+            t_count = len(df_p[df_p['prediction'] == True])
+            f_count = len(df_p[df_p['prediction'] == False])
+            if time_width == dt.timedelta(days=1):
+                tlabel = dt.datetime.strftime(df_p['notification_date'][0],"%-d %b")
+                t_dict[tlabel] = int(100*(t_count / total_count))
+                f_dict[tlabel] = int(100*(f_count / total_count))
+            else:
+                tlabel_front = dt.datetime.strftime(df_p['notification_date'].min(),"%-d %b")
+                tlabel_back = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
+                tlabel = f"{tlabel_front} - {tlabel_back}"
+                t_dict[tlabel] = int(100*(t_count / total_count))
+                f_dict[tlabel] = int(100*(f_count / total_count))
+        dt_pointer += time_width
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+                    name = 'Reduced',
+                    y = list(f_dict.values()),
+                    x = list(f_dict.keys()),
+                    marker_color='#48DCC0',
+                    text = list(map(str, f_dict.values())),
+                    textposition = 'inside'
+                    ))
+    fig.add_trace(go.Bar(
+                    name = 'Remain',
+                    y = list(t_dict.values()),
+                    x = list(t_dict.keys()),
+                    marker_color="#e54545",
+                    text = list(map(str, t_dict.values())),
+                    textposition = 'inside'
+                    ))
+
+    fig.update_layout(
+        margin = dict(t=5,r=5,l=5,b=5),
+        height = 300,
+        # title='Notifications with consecutive FALSE prediction',
+        yaxis=dict(
+            title='Prediction result / %',
+            titlefont_size=12,
+            tickfont_size=10,
+            # tickmode = 'array',
+            # tickvals = dff.tolist(),
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
+        xaxis=dict(
+            title = 'Time',
+            titlefont_size=12,
+            tickfont_size=10,
+            tickmode = 'array',
+            tickvals = list(f_dict.keys()),
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
+        paper_bgcolor = '#fff',
+        plot_bgcolor = '#fff',
+        legend=dict(
+            x=1.01,
+            y=0.9,
+            bgcolor='rgba(255, 255, 255, 0)',
+            bordercolor='rgba(255, 255, 255, 0)'
+        ),
+        barmode='stack',
+        bargap=0.15, # gap between bars of adjacent location coordinates.
+        # bargroupgap=0.1 # gap between bars of the same location coordinate.
+    )
+    return  [
+        dcc.Graph(
+            id="prediction_time_bar_plot",
+            figure=fig,
+            config={'displayModeBar': False,
+                    'responsive': True},
+            style={'height':'100%','width':'100%'},
+        ),
+    ]
+
+def draw_reduced_number_chart(true_count, false_count):
+    labels = ['TRUE','FALSE']
+
+    fig = go.Figure(data=[go.Pie(labels=labels, values=[true_count, false_count], direction="clockwise", sort=False, hole=.76)])
+
+    fig.update_traces(
+        hoverinfo='label+percent',
+        textinfo='none',
+        marker=dict(colors=["#e54545", "#48dcc0"]),
+    ),
+    fig.update_layout(
+        showlegend=False,
+        autosize=True,
+        height = 170,
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor='rgba(255,255,255,1)',
+        plot_bgcolor='rgba(255,255,255,1)',
+    )
+    return html.Div([
+        dcc.Graph(
+            id="reduced_number_chart",
+            figure=fig,
+            config={'displayModeBar': False,
+                    'responsive': True},
+            style={'width': '100%'},
+        ),
+        html.Div(
+            [
+                html.H4(f"{false_count}", style={"font-size":"1.8rem", "font-weight":"450", "line-height":"normal", "margin-bottom":"0", "padding-bottom":"0"}),
+                html.P(f"Reduced", style={"line-height":"normal", "margin-top":"0", "padding-bottom":"0"})
+            ],
+            className="mini_container_data_label"
+        ),
+    ])
+
 def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,temp_value):
     if n_clicks % 2 == 1:
         label_list.append(temp_label)
@@ -565,16 +671,18 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
     [
         # General Status block diagram value
         Output("general_status_block_chart_div", "children"),
-        Output("general_status_block_dot_indicator", "className"),
         Output("general_status_block_meter_stuck_value", "children"),
-        Output("general_status_block_alert_value", "children"),
         Output('general_status_block_low_consumption_value','children'),
         Output('general_status_block_high_consumption_value','children'),
         Output('general_status_block_other_cause_value','children'),
 
+        #consecutive bar graph
         Output('consecutive_ture_bar','children'),
         Output('more_than_2_value','children'),
         Output('latest_value','children'),
+
+        #prediction-time bar graph
+        Output('prediction-time graph div','children'),
     ],
     [
         Input('date-picker-range','start_date'),
@@ -592,11 +700,9 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     # df['notification_date'] = pd.to_datetime(df['notification_date'])
     # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-
+    
+    print("-------Counting summary page used time ----------")
     DB = DBmanager()
-    print("Counting summary page used time ----------")
-    starttime = timeit.default_timer()
-    #DB.test_add_multiple()
     #DB.update_consecutive_false()
     # print("Upadated DB, used time:", timeit.default_timer() - starttime)
 
@@ -612,8 +718,16 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
             # df = df[df['notification_date'] < end_date]
         else:
             df = DB.fetch_all()
+            start_date = get_min_date()
+            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+            end_date = get_max_date
+            end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     else:
         df = DB.fetch_all()
+        start_date = get_min_date()
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = get_max_date
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     
     print("Getting initial data, used time:", timeit.default_timer() - starttime)
 
@@ -624,24 +738,20 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     low_consumption =  0
     high_consumption = 0
     other_cause = 0
-    alarm_count =  DB.count_false()
     # print(df[df['prediction'] > 1])
     # alarm_count = len(df[df['prediction'] == False])
-    df_cause = 0 if df.empty else df.groupby('cause_code').notification_no.nunique()
-    cause_code_type = [] if df_cause == 0 else df_cause.index 
-
-    starttime = timeit.default_timer()
-    for i in range(len(cause_code_type)):
-        if 'Meter' in cause_code_type[i]:
-            meter_count += df_cause[i]
-        elif cause_code_type[i] == 'Low Consumption':
-            low_consumption += df_cause[i]
-        elif cause_code_type[i] == 'High Consumption':
-            high_consumption += df_cause[i]
-        else:
-            other_cause += df_cause[i]
-    
-    print("Calculation of numbers done, used time:", timeit.default_timer() - starttime)
+    if not df.empty:
+        df_cause = df.groupby('cause_code').notification_no.nunique()
+        cause_code_type = df_cause.index 
+        for i in range(len(cause_code_type)):
+            if 'Meter' in cause_code_type[i]:
+                meter_count += df_cause[i]
+            elif cause_code_type[i] == 'Low Consumption':
+                low_consumption += df_cause[i]
+            elif cause_code_type[i] == 'High Consumption':
+                high_consumption += df_cause[i]
+            else:
+                other_cause += df_cause[i]
 
     label_list = []
     value_list = []
@@ -691,7 +801,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     print("df_for_bar ready, used time:", timeit.default_timer() - starttime)
     fig = generate_donut_chart(label_list,value_list)
-    content = generate_substation_health_card_values(fig, total_count, meter_count, alarm_count,low_consumption,high_consumption ,other_cause)
+    content = generate_substation_health_card_values(fig, total_count, meter_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
 
     bar = draw_consecutive_true_bar(df_for_bar)
@@ -709,6 +819,9 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         df_for_bar = df_for_bar.sort_values(by = 'notification_date',ascending = True)
         latest = df_for_bar.tail(1)['notification_date'].dt.strftime('%Y-%m-%d')
     output.append(latest)
+
+    prediction_time_bar = draw_prediction_time_bar_graph(df,start_date,end_date)
+    output.append(prediction_time_bar)
     return output
 
 @app.callback(
@@ -721,6 +834,48 @@ def update_max_min_date(n_intervals):
     max_date = get_max_date()
     min_date = get_min_date()
     return [max_date,min_date]
+
+@app.callback(
+    Output('reduced_number_chart_div','children'),
+    [
+        Input('date-picker-range','start_date'),
+        Input('date-picker-range','end_date'),
+    ]
+
+)
+
+def update_reduced_number_chart(start_date,end_date):
+    DB = DBmanager()
+    starttime = timeit.default_timer()
+    if (start_date is not None) & (end_date is not None):
+        if type(start_date) == str:
+            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        if type(end_date) == str:
+            end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        if(start_date < end_date):
+            df = DB.query_in_timeperiod(start_date,end_date)
+            # df = df[df['notification_date'] > start_date]
+            # df = df[df['notification_date'] < end_date]
+        else:
+            df = DB.fetch_all()
+            start_date = get_min_date()
+            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+            end_date = get_max_date
+            end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+    else:
+        df = DB.fetch_all()
+        start_date = get_min_date()
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = get_max_date
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+    
+    if df.empty:
+        return None
+    
+    true_count = len(df[df['prediction'] == True])
+    false_count = len(df[df['prediction'] == False])
+    return draw_reduced_number_chart(true_count, false_count)
+
 #this callback uses date picker range to filte data
 # @app.callback(
 #     Output('intermediate-value', 'data'),
