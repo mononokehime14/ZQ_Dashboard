@@ -230,7 +230,7 @@ def manipulation_bar():
                     ),
                     dcc.Interval(
                         id='date_selector_interval',
-                        interval=1*1000, # in milliseconds
+                        interval=600*1000, # in milliseconds
                         n_intervals=0
                     ),
                 ],

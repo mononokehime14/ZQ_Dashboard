@@ -90,7 +90,7 @@ def draw_upper_block():
                                             ),
                                             dcc.Interval(
                                                 id='date_selector_interval',
-                                                interval=1*1000, # in milliseconds
+                                                interval=600*1000, # in milliseconds
                                                 n_intervals=0
                                             ),
                                         ],
