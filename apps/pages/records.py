@@ -269,7 +269,6 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
         # df['notification_date'] = pd.to_datetime(df['notification_date'])
         # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
         if type(start_date) == str:
-            print(start_date + max_date + min_date)
             start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
             max_date = dt.datetime.strptime(max_date,"%Y-%m-%d")
             min_date = dt.datetime.strptime(min_date,"%Y-%m-%d")
@@ -324,6 +323,5 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
 def update_datepicker_periodly(n_intervals,n_clicks):
     max_date = get_max_date()
     min_date = get_min_date()
-    print('datepicker update: ' + max_date + ' ' + min_date)
     return [max_date,min_date,max_date,max_date]
 

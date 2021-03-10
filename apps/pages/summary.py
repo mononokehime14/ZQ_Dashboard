@@ -897,8 +897,7 @@ def update_reduced_number_chart(start_date,end_date):
 def update_datepicker_periodly(n_clicks,n_intervals):
     max_date = get_max_date()
     min_date = get_min_date()
-    print('datepicker update: ' + max_date + ' ' + min_date)
-    return [max_date + dt.delta(days=1),min_date,max_date,min_date,max_date]
+    return [max_date + dt.timedelta(days=1),min_date,max_date,min_date,max_date]
 
 
 #this callback uses date picker range to filte data
