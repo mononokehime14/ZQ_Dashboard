@@ -35,6 +35,10 @@ push: build
 	az acr login -n porter
 	docker push $(REPO):$(TAG)
 
+push-dockerhub: build
+	docker tag $(REPO):$(TAG) oreh/zq-dashboard:$(TAG) 
+	docker push oreh/zq-dashboard:$(TAG)
+
 deploy: push
 	kubectl apply -f deploy/app-deploy.yaml
 
