@@ -16,8 +16,17 @@ import timeit
 
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
-from apps.pages.records import get_max_date, get_min_date
+# from apps.pages.records import get_max_date, get_min_date
 
+def get_max_date():
+    DB = DBmanager()
+    max_date = DB.find_max_date()
+    return max_date
+
+def get_min_date():
+    DB = DBmanager()
+    min_date = DB.find_min_date()
+    return min_date
 
 def status_block(title, id_prefix, additional_classnames=""):
     return html.Div(
@@ -236,14 +245,17 @@ def manipulation_bar():
                         end_date=get_max_date(),
                         start_date = get_min_date(),
                         className = 'datepicker_for_summary_page',
-                        display_format = 'Do YYYY',
                         updatemode = 'bothdates',
+                        #persistence = False,
+                        # persistence_type = 'memory',
+                        # persisted_props = ['start_date', 'end_date'],
                     ),
                     dcc.Interval(
                         id='date_selector_interval',
-                        interval=5*1000, # in milliseconds
+                        interval=600*1000, # in milliseconds
                         n_intervals=0
                     ),
+                    html.Button([],id='fake_button_to_force_refresh',style={'display':'none'},n_clicks = 1),
                 ],
                 className = 'u-grid-center',
                 style={'width':'100%'}
@@ -446,7 +458,8 @@ def generate_substation_health_card_values(fig, total_count, ok_count,infected,i
     ], [f"{ok_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
 def draw_consecutive_true_bar(df):
-
+    if df.empty:
+        return None
     dff = df.groupby(['consecutive_false'])['notification_no'].size()
     dff = dff.iloc[1:]
     fig = go.Figure()
@@ -731,6 +744,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         end_date = get_max_date()
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     
+    if df.empty:
+        return [None,None,None,None,None,None,None,None,None]
     print("Getting initial data, used time:", timeit.default_timer() - starttime)
 
     output = []
@@ -810,10 +825,12 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     output.append(bar)
 
     starttime = timeit.default_timer()
-    df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
+    if not df_for_bar.empty:
+        df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
+        more_than_2 = len(df_for_bar)
     print("Searching for more than 2 done, used time:", timeit.default_timer() - starttime)
-    more_than_2 = [f"{df_for_bar.size}"]
-    output.append(more_than_2)
+    more_than_2_out = [f"{more_than_2}"]
+    output.append(more_than_2_out)
     if(more_than_2 == 0):
         latest = 'None'
     else:
@@ -825,18 +842,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     prediction_time_bar = draw_prediction_time_bar_graph(df,start_date,end_date)
     output.append(prediction_time_bar)
     return output
-
-@app.callback(
-    [Output('date-picker-range','max_date_allowed'),
-    Output('date-picker-range','min_date_allowed'),],
-    Input('date_selector_interval','n_intervals'),
-)
-
-def update_max_min_date(n_intervals):
-    max_date = get_max_date()
-    min_date = get_min_date()
-    print('Updating Min and Max date allowed, Min:{}, Max:{}'.format(min_date,max_date))
-    return [max_date,min_date]
 
 @app.callback(
     Output('reduced_number_chart_div','children'),
@@ -868,7 +873,7 @@ def update_reduced_number_chart(start_date,end_date):
         df = DB.fetch_all()
         start_date = get_min_date()
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        end_date = get_max_date
+        end_date = get_max_date()
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     
     if df.empty:
@@ -877,6 +882,24 @@ def update_reduced_number_chart(start_date,end_date):
     true_count = len(df[df['prediction'] == True])
     false_count = len(df[df['prediction'] == False])
     return draw_reduced_number_chart(true_count, false_count)
+
+
+@app.callback(
+    [Output('date-picker-range','max_date_allowed'),
+    Output('date-picker-range','min_date_allowed'),
+    Output('date-picker-range','initial_visible_month'),
+    Output('date-picker-range','start_date'),
+    Output('date-picker-range','end_date')],
+    Input('fake_button_to_force_refresh','n_clicks'),
+    Input('date_selector_interval','n_intervals'),
+)
+
+def update_datepicker_periodly(n_clicks,n_intervals):
+    max_date = get_max_date()
+    min_date = get_min_date()
+    print('datepicker update: ' + max_date + ' ' + min_date)
+    return [max_date,min_date,max_date,min_date,max_date]
+
 
 #this callback uses date picker range to filte data
 # @app.callback(
