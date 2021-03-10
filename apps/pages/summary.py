@@ -13,7 +13,6 @@ import base64
 import json
 import sqlalchemy
 import timeit
-
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
 # from apps.pages.records import get_max_date, get_min_date
@@ -240,12 +239,13 @@ def manipulation_bar():
                     dcc.DatePickerRange(
                         id='date-picker-range',
                         min_date_allowed=get_min_date(),
-                        max_date_allowed=get_max_date(),
+                        max_date_allowed=get_max_date()+dt.timedelta(days=1),
                         initial_visible_month=get_max_date(),
                         end_date=get_max_date(),
                         start_date = get_min_date(),
                         className = 'datepicker_for_summary_page',
                         updatemode = 'bothdates',
+                        display_format='YYYY-MM-DD',
                         #persistence = False,
                         # persistence_type = 'memory',
                         # persisted_props = ['start_date', 'end_date'],
@@ -898,7 +898,7 @@ def update_datepicker_periodly(n_clicks,n_intervals):
     max_date = get_max_date()
     min_date = get_min_date()
     print('datepicker update: ' + max_date + ' ' + min_date)
-    return [max_date,min_date,max_date,min_date,max_date]
+    return [max_date + dt.delta(days=1),min_date,max_date,min_date,max_date]
 
 
 #this callback uses date picker range to filte data
