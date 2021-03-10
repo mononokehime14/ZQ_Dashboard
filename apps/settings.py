@@ -21,3 +21,6 @@ DB_URI = "postgresql://{db_user}:{db_password}@{db_host}/{db_name}".format(
     db_host=DB_HOST,
     db_name=DB_NAME,
 ) 
+
+VALID_USER = get_env_or_raise('VALID_USER')
+VALID_PASSWORD = get_env_or_raise('VALID_PASSWORD')

@@ -13,6 +13,8 @@ test:
 	-e DB_USER=porter \
 	-e DB_PASSWORD=porter \
 	-e DB_HOST=$$IP \
+	-e VALID_USER=porter \
+	-e VALID_PASSWORD=porter \
 	-v `pwd`/apps:/apps \
 	$(REPO):$(TAG) \
 	python -m apps.index
@@ -25,6 +27,8 @@ db-test:
 	-e DB_USER=porter \
 	-e DB_PASSWORD=porter \
 	-e DB_HOST=$$IP \
+	-e VALID_USER=porter \
+	-e VALID_PASSWORD=porter \
 	-v `pwd`:/srv \
 	$(REPO):$(TAG) bash
 
