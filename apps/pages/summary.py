@@ -459,8 +459,10 @@ def draw_consecutive_true_bar(df):
 
     fig.update_layout(
         #title_text = 'Consecutively reduced tickets',
-        margin = dict(t=5,r=5,l=5,b=5),
-        height = 320,
+        uniformtext_minsize=8, 
+        uniformtext_mode='show',
+        margin = dict(t=20,r=5,l=5,b=5),
+        height = 300,
         # title='Notifications with consecutive FALSE prediction',
         yaxis=dict(
             title='Notifications number',
@@ -502,7 +504,7 @@ def draw_consecutive_true_bar(df):
             figure=fig,
             config={'displayModeBar': False,
                     'responsive': True},
-            style={'height':'100%'},
+            style={'height':'100%','margin-top':'5px'},
         ),
     ]
 
