@@ -6,7 +6,7 @@ import dash_table
 app = Dash(
     __name__,
     meta_tags=[{"name": "viewport", "content": "width=device-width"}],
-    title="ZP Dashboard",
+    title="ZQ Dashboard",
     update_title=None,
 )
 
