@@ -446,7 +446,8 @@ def generate_substation_health_card_values(fig, total_count, ok_count,infected,i
     ], [f"{ok_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
 def draw_consecutive_true_bar(df):
-
+    if df.empty:
+        return None
     dff = df.groupby(['consecutive_false'])['notification_no'].size()
     dff = dff.iloc[1:]
     fig = go.Figure()
@@ -731,6 +732,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         end_date = get_max_date()
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     
+    if df.empty:
+        return [None,None,None,None,None,None,None,None,None]
     print("Getting initial data, used time:", timeit.default_timer() - starttime)
 
     output = []
@@ -810,7 +813,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     output.append(bar)
 
     starttime = timeit.default_timer()
-    df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
+    if not df_for_bar.empty:
+        df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
     print("Searching for more than 2 done, used time:", timeit.default_timer() - starttime)
     more_than_2 = [f"{df_for_bar.size}"]
     output.append(more_than_2)
