@@ -1,5 +1,6 @@
 import datetime
 from dateutil import tz
+import dash_auth
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State, ClientsideFunction
@@ -9,6 +10,8 @@ import re
 from apps.app import app
 from apps.data_manager import DBmanager,Cell
 from apps.pages import summary,search,records
+#from ..user import VALID_USERNAME_PASSWORD_PAIRS
+from apps.settings import VALID_PASSWORD,VALID_USER
 
 import sqlalchemy
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -23,6 +26,14 @@ import timeit
 
 server = app.server
 
+VALID_USERNAME_PASSWORD_PAIRS = {
+    VALID_USER: VALID_PASSWORD
+}
+
+auth = dash_auth.BasicAuth(
+    app,
+    VALID_USERNAME_PASSWORD_PAIRS
+)
 #DB = DBmanager()
 # DB.start_over()
 #DB.update_consecutive_false_for_whole()

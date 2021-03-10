@@ -320,14 +320,13 @@ layout = [
 
                                                 ],
                                                 id= 'consecutive_ture_bar',
-                                                style = {'max-height':'300px'},
                                                 className  = 'col-sm-9 col-md-9 col-lg-9 u-cell',
                                             ),
                                             html.Div(
                                                 [
                                                     html.Div(
                                                         [
-                                                            html.P('FALSE more than 2 times:',className = 'h5'),
+                                                            html.P('Reduced more than 2 times:',className = 'h5'),
                                                             html.Span(id="more_than_2_value", className="mini_container_value",style={'color':'#4F5A60'}),
                                                         ],
                                                         className = 'u-pb3 u-mb3',
@@ -459,7 +458,10 @@ def draw_consecutive_true_bar(df):
                     ))
 
     fig.update_layout(
-        margin = dict(t=5,r=5,l=5,b=5),
+        #title_text = 'Consecutively reduced tickets',
+        uniformtext_minsize=8, 
+        uniformtext_mode='show',
+        margin = dict(t=20,r=5,l=5,b=5),
         height = 300,
         # title='Notifications with consecutive FALSE prediction',
         yaxis=dict(
@@ -474,7 +476,7 @@ def draw_consecutive_true_bar(df):
             linecolor = '#4F5A60',
         ),
         xaxis=dict(
-            title = 'Consecutive False number',
+            title = 'Consecutive Reduction number',
             titlefont_size=12,
             tickfont_size=10,
             tickmode = 'array',
@@ -502,7 +504,7 @@ def draw_consecutive_true_bar(df):
             figure=fig,
             config={'displayModeBar': False,
                     'responsive': True},
-            style={'height':'100%'},
+            style={'height':'100%','margin-top':'5px'},
         ),
     ]
 
@@ -520,21 +522,20 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
     t_dict = {}
     f_dict = {}
     while(dt_pointer < end_date):
-        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
-        total_count = len(df_p)   
-        if total_count != 0:
+        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]   
+        if len(df_p)  != 0:
             t_count = len(df_p[df_p['prediction'] == True])
             f_count = len(df_p[df_p['prediction'] == False])
             if time_width == dt.timedelta(days=1):
                 tlabel = dt.datetime.strftime(df_p['notification_date'][0],"%-d %b")
-                t_dict[tlabel] = int(100*(t_count / total_count))
-                f_dict[tlabel] = int(100*(f_count / total_count))
+                t_dict[tlabel] = t_count
+                f_dict[tlabel] = f_count
             else:
                 tlabel_front = dt.datetime.strftime(df_p['notification_date'].min(),"%-d %b")
                 tlabel_back = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
                 tlabel = f"{tlabel_front} - {tlabel_back}"
-                t_dict[tlabel] = int(100*(t_count / total_count))
-                f_dict[tlabel] = int(100*(f_count / total_count))
+                t_dict[tlabel] = t_count
+                f_dict[tlabel] = f_count
         dt_pointer += time_width
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -555,11 +556,12 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
                     ))
 
     fig.update_layout(
+        #title_text = 'Reductions in chosen period',
         margin = dict(t=5,r=5,l=5,b=5),
-        height = 300,
+        height = 320,
         # title='Notifications with consecutive FALSE prediction',
         yaxis=dict(
-            title='Prediction result / %',
+            title='Prediction result',
             titlefont_size=12,
             tickfont_size=10,
             # tickmode = 'array',
@@ -589,8 +591,8 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
             bordercolor='rgba(255, 255, 255, 0)'
         ),
         barmode='stack',
-        bargap=0.15, # gap between bars of adjacent location coordinates.
-        # bargroupgap=0.1 # gap between bars of the same location coordinate.
+        bargap=0.1, # gap between bars of adjacent location coordinates.
+        bargroupgap=0.1 # gap between bars of the same location coordinate.
     )
     return  [
         dcc.Graph(
@@ -720,13 +722,13 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
             df = DB.fetch_all()
             start_date = get_min_date()
             start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-            end_date = get_max_date
+            end_date = get_max_date()
             end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     else:
         df = DB.fetch_all()
         start_date = get_min_date()
         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        end_date = get_max_date
+        end_date = get_max_date()
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     
     print("Getting initial data, used time:", timeit.default_timer() - starttime)
@@ -860,7 +862,7 @@ def update_reduced_number_chart(start_date,end_date):
             df = DB.fetch_all()
             start_date = get_min_date()
             start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-            end_date = get_max_date
+            end_date = get_max_date()
             end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     else:
         df = DB.fetch_all()
