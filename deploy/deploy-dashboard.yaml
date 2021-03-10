@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
       - name: alembic
-        image: porter.azurecr.io/porter/zq-dashboard:0.1.9
+        image: porter.azurecr.io/porter/zq-dashboard:0.1.10
         imagePullPolicy: Always
         env:
         - name: DB_PASSWORD
@@ -38,7 +38,7 @@ spec:
 
       containers:
       - name: zq-result-dashboard
-        image: porter.azurecr.io/porter/zq-dashboard:0.1.9
+        image: porter.azurecr.io/porter/zq-dashboard:0.1.10
         imagePullPolicy: Always
         env:
         - name: DB_PASSWORD
