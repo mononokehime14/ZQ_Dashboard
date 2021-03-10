@@ -78,61 +78,61 @@ auth = dash_auth.BasicAuth(
 #     print("The time difference is :", timeit.default_timer() - starttime)
 
 # print(df['prediction'].unique())
+def serve_layout():
+    return html.Div(
+        [
+            #dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
 
-app.layout = html.Div(
-    [
-        #dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
+            # represents the URL bar, doesn't render anything
+            dcc.Location(id='url', refresh=False),
 
-        # represents the URL bar, doesn't render anything
-        dcc.Location(id='url', refresh=False),
-
-        # Header Navigation Bar
-        html.Div(
-            html.Nav(
-                [
-                    html.Div(
-                        html.Img(
-                            src=app.get_asset_url("spgroup-logo.png"),
-                            id="spgroup-logo",
+            # Header Navigation Bar
+            html.Div(
+                html.Nav(
+                    [
+                        html.Div(
+                            html.Img(
+                                src=app.get_asset_url("spgroup-logo.png"),
+                                id="spgroup-logo",
+                            ),
+                            className="lm--header-logo u-hidden@sm"
                         ),
-                        className="lm--header-logo u-hidden@sm"
-                    ),
-                    html.Nav(
+                        html.Nav(
+                            html.Ul(
+                                [],
+                                id="nav-tabs",
+                                className="lm--tabs-nav",
+                                style={"height": "100%"},
+                            ),
+                            **{
+                                'data-tabs': '',
+                            }
+                        ),
                         html.Ul(
-                            [],
-                            id="nav-tabs",
-                            className="lm--tabs-nav",
-                            style={"height": "100%"},
-                        ),
-                        **{
-                            'data-tabs': '',
-                        }
-                    ),
-                    html.Ul(
-                        html.Li(
-                            [
-                                html.Div(
-                                    id="current_datetime_display"
-                                ),
-                                dcc.Interval(
-                                    id="interval-component",
-                                    interval=1*1000, # in milliseconds
-                                    n_intervals=0
-                                ),
-                            ],
-                            className="u-hidden@sm"
-                        ),
-                        className="lm--header-menu lm--header-menu--secondary",
-                    )
-                ],
-                className="lm--header-nav",
+                            html.Li(
+                                [
+                                    html.Div(
+                                        id="current_datetime_display"
+                                    ),
+                                    dcc.Interval(
+                                        id="interval-component",
+                                        interval=1*1000, # in milliseconds
+                                        n_intervals=0
+                                    ),
+                                ],
+                                className="u-hidden@sm"
+                            ),
+                            className="lm--header-menu lm--header-menu--secondary",
+                        )
+                    ],
+                    className="lm--header-nav",
+                ),
+                className="lm--header u-mb0 u-bb",
             ),
-            className="lm--header u-mb0 u-bb",
-        ),
 
-        html.Div(id="pageContent"),
-    ]
-)
+            html.Div(id="pageContent"),
+        ]
+    )
 
 
 
@@ -199,7 +199,7 @@ def display_page(pathname):
 
     return layout, tabs
 
-
+app.layout = serve_layout
 
 if __name__ == "__main__":
     app.run_server(debug=True, host='0.0.0.0', port='8425')

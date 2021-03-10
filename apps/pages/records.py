@@ -85,9 +85,10 @@ def draw_upper_block():
                                     ),
                                     dcc.Interval(
                                         id='date_selector_interval',
-                                        interval=5*1000, # in milliseconds
+                                        interval=600*1000, # in milliseconds
                                         n_intervals=0
                                     ),
+                                    html.Button([],id='fake_button_to_force_refresh',style={'display':'none'},n_clicks = 1),
                                 ],
                                 id = 'date_selector_div',
                                 className = 'col-sm-3 col-md-3 col-lg-3 col-xl-3 u-cell',
@@ -313,10 +314,16 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
 
 @app.callback(
     [Output('date_selector_single','max_date_allowed'),
-    Output('date_selector_single','min_date_allowed')],
+    Output('date_selector_single','min_date_allowed'),
+    Output('date_selector_single','initial_visible_month'),
+    Output('date_selector_single','date')],
     Input('date_selector_interval','n_intervals'),
+    Input('fake_button_to_force_refresh','n_clicks'),
 )
 
-def update_max_min_date(n_intervals):
-    return [get_max_date(),get_min_date()]
+def update_datepicker_periodly(n_intervals,n_clicks):
+    max_date = get_max_date()
+    min_date = get_min_date()
+    print('datepicker update: ' + max_date + ' ' + min_date)
+    return [max_date,min_date,max_date,max_date]
 
