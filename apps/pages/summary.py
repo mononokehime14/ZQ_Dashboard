@@ -833,6 +833,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 def update_max_min_date(n_intervals):
     max_date = get_max_date()
     min_date = get_min_date()
+    print('Updating Min and Max date allowed, Min:{}, Max:{}'.format(min_date,max_date))
     return [max_date,min_date]
 
 @app.callback(
@@ -846,7 +847,6 @@ def update_max_min_date(n_intervals):
 
 def update_reduced_number_chart(start_date,end_date):
     DB = DBmanager()
-    starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
         if type(start_date) == str:
             start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
