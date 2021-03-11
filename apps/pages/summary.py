@@ -525,7 +525,6 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
     if df.empty:
         return None
     time_width = end_date - start_date
-    print(time_width)
     if time_width <= dt.timedelta(days=12):
         time_width = dt.timedelta(days=1)
     else:
@@ -535,12 +534,12 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
     t_dict = {}
     f_dict = {}
     while(dt_pointer < end_date):
-        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]   
-        if len(df_p)  != 0:
+        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < (dt_pointer + time_width))]   
+        if len(df_p) != 0:
             t_count = len(df_p[df_p['prediction'] == True])
             f_count = len(df_p[df_p['prediction'] == False])
             if time_width == dt.timedelta(days=1):
-                tlabel = dt.datetime.strftime(df_p['notification_date'][0],"%-d %b")
+                tlabel = dt.datetime.strftime(df_p['notification_date'].iloc[0],"%-d %b")
                 t_dict[tlabel] = t_count
                 f_dict[tlabel] = f_count
             else:
@@ -848,11 +847,13 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     [
         Input('date-picker-range','start_date'),
         Input('date-picker-range','end_date'),
-    ]
+    ],
+    [State('date-picker-range','max_date_allowed'),
+    State('date-picker-range','min_date_allowed'),]
 
 )
 
-def update_reduced_number_chart(start_date,end_date):
+def update_reduced_number_chart(start_date,end_date,max_date,min_date):
     DB = DBmanager()
     if (start_date is not None) & (end_date is not None):
         if type(start_date) == str:
