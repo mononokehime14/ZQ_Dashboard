@@ -3,9 +3,9 @@ import os
 
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine,String,Column,or_,and_,update,asc
-from sqlalchemy.orm import sessionmaker,Query
-from sqlalchemy.types import Integer,String,Text,DateTime,Boolean
+from sqlalchemy import create_engine, String,Column, or_, and_, update, asc
+from sqlalchemy.orm import sessionmaker, Query
+from sqlalchemy.types import Integer, String, Text, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import exists, func
 import datetime as dt

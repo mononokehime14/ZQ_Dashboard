@@ -11,11 +11,11 @@ import datetime
 import timeit
 import sqlalchemy
 
-from apps.data_manager import DBmanager, Cell
 
+from apps.data_manager import DBmanager, Cell
 from apps.app import app
 
-display_columns = ['notification_no','notification_date','prediction','cause_code']
+display_columns = ['notification_no','meter_no','contract_acct','notification_date','cause_code','prediction']
 
 def search_bar():
     return html.Div(

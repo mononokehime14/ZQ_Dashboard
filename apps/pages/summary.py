@@ -1,3 +1,10 @@
+import io
+import urllib.parse
+import base64
+import json
+import timeit
+
+
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
@@ -7,12 +14,9 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 import datetime as dt
 import pandas as pd
 import numpy as np
-import io
-import urllib.parse
-import base64
-import json
 import sqlalchemy
-import timeit
+
+
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
 # from apps.pages.records import get_max_date, get_min_date
@@ -826,8 +830,8 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     starttime = timeit.default_timer()
     if not df_for_bar.empty:
-        df_for_bar = df_for_bar[df_for_bar['consecutive_false'] > 2]
-        more_than_2 = len(df_for_bar)
+        df_m2 = df_for_bar[df_for_bar['consecutive_false'] > 2]
+        more_than_2 = len(df_m2)
     print("Searching for more than 2 done, used time:", timeit.default_timer() - starttime)
     more_than_2_out = [f"{more_than_2}"]
     output.append(more_than_2_out)
@@ -835,11 +839,10 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         latest = 'None'
     else:
         #df_for_bar['notification_date'] = pd.to_datetime(df_for_bar['notification_date'])
-        df_for_bar = df_for_bar.sort_values(by = 'notification_date',ascending = True)
-        latest = df_for_bar.tail(1)['notification_date'].dt.strftime('%Y-%m-%d')
+        latest = dt.datetime.strftime(df_m2['notification_date'].max(),"%Y-%m-%d")
     output.append(latest)
 
-    prediction_time_bar = draw_prediction_time_bar_graph(df,start_date,end_date)
+    prediction_time_bar = draw_prediction_time_bar_graph(df_for_bar,start_date,end_date)
     output.append(prediction_time_bar)
     return output
 

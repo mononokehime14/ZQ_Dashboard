@@ -8,9 +8,8 @@ import pandas as pd
 import re
 
 from apps.app import app
-from apps.data_manager import DBmanager,Cell
-from apps.pages import summary,search,records
-#from ..user import VALID_USERNAME_PASSWORD_PAIRS
+from apps.data_manager import DBmanager, Cell
+from apps.pages import summary, search, records
 from apps.settings import VALID_PASSWORD, VALID_USER
 
 import sqlalchemy
