@@ -11,7 +11,7 @@ from apps.app import app
 from apps.data_manager import DBmanager,Cell
 from apps.pages import summary,search,records
 #from ..user import VALID_USERNAME_PASSWORD_PAIRS
-from apps.settings import VALID_PASSWORD,VALID_USER
+from apps.settings import VALID_PASSWORD, VALID_USER
 
 import sqlalchemy
 from sqlalchemy.orm import scoped_session, sessionmaker

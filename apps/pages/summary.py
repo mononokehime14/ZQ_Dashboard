@@ -13,7 +13,6 @@ import base64
 import json
 import sqlalchemy
 import timeit
-
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
 # from apps.pages.records import get_max_date, get_min_date
@@ -240,12 +239,13 @@ def manipulation_bar():
                     dcc.DatePickerRange(
                         id='date-picker-range',
                         min_date_allowed=get_min_date(),
-                        max_date_allowed=get_max_date(),
+                        max_date_allowed=get_max_date()+dt.timedelta(days=1),
                         initial_visible_month=get_max_date(),
                         end_date=get_max_date(),
                         start_date = get_min_date(),
                         className = 'datepicker_for_summary_page',
                         updatemode = 'bothdates',
+                        display_format='YYYY-MM-DD',
                         #persistence = False,
                         # persistence_type = 'memory',
                         # persisted_props = ['start_date', 'end_date'],
@@ -525,21 +525,21 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
     if df.empty:
         return None
     time_width = end_date - start_date
-    if time_width <= dt.timedelta(days=12):
+    if time_width <= dt.timedelta(days=45):
         time_width = dt.timedelta(days=1)
     else:
-        time_width = time_width / 12
-    print(time_width)
+        time_width = time_width / 45
+
     dt_pointer = start_date
     t_dict = {}
     f_dict = {}
     while(dt_pointer < end_date):
-        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < (dt_pointer + time_width))]   
-        if len(df_p) != 0:
+        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
+        if len(df_p)  != 0:
             t_count = len(df_p[df_p['prediction'] == True])
             f_count = len(df_p[df_p['prediction'] == False])
-            if time_width == dt.timedelta(days=1):
-                tlabel = dt.datetime.strftime(df_p['notification_date'].iloc[0],"%-d %b")
+            if time_width.days == 1:
+                tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
                 t_dict[tlabel] = t_count
                 f_dict[tlabel] = f_count
             else:
@@ -549,6 +549,7 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
                 t_dict[tlabel] = t_count
                 f_dict[tlabel] = f_count
         dt_pointer += time_width
+
     fig = go.Figure()
     fig.add_trace(go.Bar(
                     name = 'Reduced',
@@ -898,8 +899,7 @@ def update_reduced_number_chart(start_date,end_date,max_date,min_date):
 def update_datepicker_periodly(n_clicks,n_intervals):
     max_date = get_max_date()
     min_date = get_min_date()
-    print('datepicker update: ' + max_date + ' ' + min_date)
-    return [max_date,min_date,max_date,min_date,max_date]
+    return [max_date + dt.timedelta(days=1),min_date,max_date,min_date,max_date]
 
 
 #this callback uses date picker range to filte data

@@ -21,3 +21,5 @@ CMD ["python", "-m", "apps.index"]
 COPY alembic /srv/alembic
 COPY alembic.ini /srv/alembic.ini
 COPY scripts /srv/scripts
+RUN pip install gunicorn==20.0.4
+
