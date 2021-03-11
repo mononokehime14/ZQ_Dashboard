@@ -154,9 +154,13 @@ a.clickable-card:hover{
 }
 
 .transparent_button{
-  background: none;
-  border:none;
-  overflow:hidden;
+  color:transparent;
+}
+
+.selected_button{
+  background-color:#00b0b2;
+  opacity: 0.3;
+  border-color:#00b0b2;
 }
 
 .forchecking{

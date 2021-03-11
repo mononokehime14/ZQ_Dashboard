@@ -9,12 +9,12 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
-import plotly.express as px
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import datetime as dt
 import pandas as pd
 import numpy as np
 import sqlalchemy
+from dateutil.relativedelta import relativedelta
 
 
 from apps.data_manager import DBmanager, Cell
@@ -66,7 +66,7 @@ def status_block(title, id_prefix, additional_classnames=""):
                                                             html.P("Meter Problem", className="h5",style={'color':'#4F5A60'}),
                                                             html.Div(
                                                                 [
-                                                                    html.Span(className="healthy-dot",style={'background-color':'#48dcc0'}),
+                                                                    html.Span(className="healthy-dot",style={'background-color':'#666e76'}),
                                                                     html.Span(id=f"{id_prefix}_meter_stuck_value", className="mini_container_value",style={'color':'#4F5A60'}),
                                                                 ],
                                                                 style = {'text-align':'left'},
@@ -426,7 +426,7 @@ def draw_non_consecutive_found():
 
 def generate_donut_chart(label_list,value_list):
     # labels = ['meter_count','low_consumption','high_consumption','other_cause']
-    color_dic = {'meter_count':"#48dcc0",'low_consumption':'#ff9d5a','high_consumption':'#ffe75a','other_cause':'#158693'}
+    color_dic = {'meter_count':'#666e76','low_consumption':'#ff9d5a','high_consumption':'#ffe75a','other_cause':'#158693'}
     fig = go.Figure(data=[go.Pie(labels=label_list, values=value_list, direction="clockwise", sort=False, hole=.76)])
 
     fig.update_traces(
@@ -528,31 +528,56 @@ def draw_consecutive_true_bar(df):
 def draw_prediction_time_bar_graph(df,start_date,end_date):
     if df.empty:
         return None
-    time_width = end_date - start_date
-    if time_width <= dt.timedelta(days=45):
-        time_width = dt.timedelta(days=1)
-    else:
-        time_width = time_width / 45
 
-    dt_pointer = start_date
-    t_dict = {}
-    f_dict = {}
-    while(dt_pointer < end_date):
-        df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
-        if len(df_p)  != 0:
-            t_count = len(df_p[df_p['prediction'] == True])
-            f_count = len(df_p[df_p['prediction'] == False])
-            if time_width.days == 1:
+    time_width = end_date - start_date
+    if time_width <= dt.timedelta(days=31):
+        time_width = dt.timedelta(days=1)
+        dt_pointer = start_date
+        t_dict = {}
+        f_dict = {}
+        while(dt_pointer < end_date):
+            df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
+            if len(df_p) != 0:
+                t_count = len(df_p[df_p['prediction'] == True])
+                f_count = len(df_p[df_p['prediction'] == False])
                 tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
                 t_dict[tlabel] = t_count
                 f_dict[tlabel] = f_count
-            else:
-                tlabel_front = dt.datetime.strftime(df_p['notification_date'].min(),"%-d %b")
-                tlabel_back = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
-                tlabel = f"{tlabel_front} - {tlabel_back}"
+            dt_pointer += time_width
+    else:
+        dt_pointer = dt.datetime(month=start_date.month,year=start_date.year,day=1)
+        t_dict = {}
+        f_dict = {}
+        while(dt_pointer < end_date):
+            #dt_pointer = dt.datetime(month=dt_pointer.month)
+            df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + relativedelta(months=+1))]
+            if len(df_p) != 0:
+                t_count = len(df_p[df_p['prediction'] == True])
+                f_count = len(df_p[df_p['prediction'] == False])
+                tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%b %Y")
                 t_dict[tlabel] = t_count
                 f_dict[tlabel] = f_count
-        dt_pointer += time_width
+            dt_pointer += relativedelta(months=+1)
+
+    # dt_pointer = start_date
+    # t_dict = {}
+    # f_dict = {}
+    # while(dt_pointer < end_date):
+    #     df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
+    #     if len(df_p) != 0:
+    #         t_count = len(df_p[df_p['prediction'] == True])
+    #         f_count = len(df_p[df_p['prediction'] == False])
+    #         if time_width.days == 1:
+    #             tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
+    #             t_dict[tlabel] = t_count
+    #             f_dict[tlabel] = f_count
+    #         else:
+    #             tlabel_front = dt.datetime.strftime(df_p['notification_date'].min(),"%-d %b")
+    #             tlabel_back = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
+    #             tlabel = f"{tlabel_front} - {tlabel_back}"
+    #             t_dict[tlabel] = t_count
+    #             f_dict[tlabel] = f_count
+    #     dt_pointer += time_width
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -702,6 +727,9 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
 
         #prediction-time bar graph
         Output('prediction-time graph div','children'),
+
+        #reduced_number_chart
+        Output('reduced_number_chart_div','children'),
     ],
     [
         Input('date-picker-range','start_date'),
@@ -781,7 +809,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,lc_n_clicks,'low_consumption',low_consumption)
     # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,hc_n_clicks,'high_consumption',high_consumption)
     # label_list,value_list,total_count = update_status_chart(label_list,value_list,total_count,other_n_clicks,'other_cause',other_cause)
-    starttime = timeit.default_timer()
+
     if meter_n_clicks % 2 == 1:
         label_list.append('meter_count')
         value_list.append(meter_count)
@@ -820,7 +848,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         total_count = meter_count + low_consumption + high_consumption + other_cause
         df_for_bar = df
 
-    print("df_for_bar ready, used time:", timeit.default_timer() - starttime)
     fig = generate_donut_chart(label_list,value_list)
     content = generate_substation_health_card_values(fig, total_count, meter_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
@@ -828,11 +855,10 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     bar = draw_consecutive_true_bar(df_for_bar)
     output.append(bar)
 
-    starttime = timeit.default_timer()
     if not df_for_bar.empty:
         df_m2 = df_for_bar[df_for_bar['consecutive_false'] > 2]
         more_than_2 = len(df_m2)
-    print("Searching for more than 2 done, used time:", timeit.default_timer() - starttime)
+
     more_than_2_out = [f"{more_than_2}"]
     output.append(more_than_2_out)
     if(more_than_2 == 0):
@@ -844,50 +870,14 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     prediction_time_bar = draw_prediction_time_bar_graph(df_for_bar,start_date,end_date)
     output.append(prediction_time_bar)
-    return output
 
-@app.callback(
-    Output('reduced_number_chart_div','children'),
-    [
-        Input('date-picker-range','start_date'),
-        Input('date-picker-range','end_date'),
-    ],
-    [State('date-picker-range','max_date_allowed'),
-    State('date-picker-range','min_date_allowed'),]
-
-)
-
-def update_reduced_number_chart(start_date,end_date,max_date,min_date):
-    DB = DBmanager()
-    if (start_date is not None) & (end_date is not None):
-        if type(start_date) == str:
-            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        if type(end_date) == str:
-            end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
-        if(start_date < end_date):
-            df = DB.query_in_timeperiod(start_date,end_date)
-            # df = df[df['notification_date'] > start_date]
-            # df = df[df['notification_date'] < end_date]
-        else:
-            df = DB.fetch_all()
-            start_date = get_min_date()
-            start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-            end_date = get_max_date()
-            end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
-    else:
-        df = DB.fetch_all()
-        start_date = get_min_date()
-        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        end_date = get_max_date()
-        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+    true_count = len(df_for_bar[df_for_bar['prediction'] == True])
+    false_count = len(df_for_bar[df_for_bar['prediction'] == False])
+    reduced_number_donut = draw_reduced_number_chart(true_count, false_count)
+    output.append(reduced_number_donut)
     
-    if df.empty:
-        return None
-    
-    true_count = len(df[df['prediction'] == True])
-    false_count = len(df[df['prediction'] == False])
-    return draw_reduced_number_chart(true_count, false_count)
-
+    print("All drawing acomplished, used time:", timeit.default_timer() - starttime)
+    return output    
 
 @app.callback(
     [Output('date-picker-range','max_date_allowed'),
@@ -905,28 +895,42 @@ def update_datepicker_periodly(n_clicks,n_intervals):
     return [max_date + dt.timedelta(days=1),min_date,max_date,min_date,max_date]
 
 
-#this callback uses date picker range to filte data
-# @app.callback(
-#     Output('intermediate-value', 'data'),
-#     [Input('date-picker-range','start_date'),
-#     Input('date-picker-range','end_date')],
-#     #State('memory-value','data')
-# )
+@app.callback(
+    [
+        Output('meter_cause_button','className'),
+        Output('low_consumption_button','className'),
+        Output('high_consumption_button','className'),
+        Output('other_cause_button','className'),
+    ],
+    [
+        Input('meter_cause_button','n_clicks'),
+        Input('low_consumption_button','n_clicks'),
+        Input('high_consumption_button','n_clicks'),
+        Input('other_cause_button','n_clicks'),
+    ],
+)
 
-# def update_date_range(start_date,end_date):
-#     #df = pd.read_json(df, orient="split")
-#     conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-#     engine = sqlalchemy.create_engine(conn_url)
-#     df = pd.read_sql_table('notificationlist',con = engine)
+def update_button_display(meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
+    print(str(meter_n_clicks) + ' ' + str(lc_n_clicks) + ' ' + str(hc_n_clicks) + ' ' + str(other_n_clicks))
+    if meter_n_clicks % 2 == 1:
+        meter_class = 'selected_button'
+    else:
+        meter_class = 'transparent_button'
 
-#     #df['notification_date'] = pd.to_datetime(df['notification_date']).dt.strftime('%Y-%m-%d')
-#     df['notification_date'] = pd.to_datetime(df['notification_date'])
+    if lc_n_clicks % 2 == 1:
+        lc_class = 'selected_button'
+    else:
+        lc_class = 'transparent_button'
 
-#     if (start_date is not None) & (end_date is not None):
-#         start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-#         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
-#         if(start_date < end_date):
-#             df = df[df['notification_date'] > start_date]
-#             df = df[df['notification_date'] < end_date]
+    if hc_n_clicks % 2 == 1:
+        hc_class = 'selected_button'
+    else:
+        hc_class = 'transparent_button'
 
-#     return df.to_json(orient='split',date_format='iso')
+    if other_n_clicks % 2 == 1:
+        other_class = 'selected_button'
+    else:
+        other_class = 'transparent_button'
+
+    return [meter_class,lc_class,hc_class,other_class]
+
