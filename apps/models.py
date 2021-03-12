@@ -43,6 +43,18 @@ class Cell(Base):
     prediction = Column(Boolean)
     probability = Column(Float, nullable=True)
     consecutive_false = Column(Integer)
+    consec_false_1month = Column(Integer)
+    consec_false_2month = Column(Integer)
+    consec_false_3month = Column(Integer)
+    consec_false_4month = Column(Integer)
+    consec_false_5month = Column(Integer)
+    consec_false_6month = Column(Integer)
+    consec_false_7month = Column(Integer)
+    consec_false_8month = Column(Integer)
+    consec_false_9month = Column(Integer)
+    consec_false_10month = Column(Integer)
+    consec_false_11month = Column(Integer)
+    consec_false_12month = Column(Integer)
 
     def __repr__(self):
         return "<NotificationList(notification_no='{}', meter_no='{}'>".format(self.notification_no, self.meter_no)

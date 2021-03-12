@@ -10,7 +10,7 @@ import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State, ClientsideFunction
-import datetime as dt
+
 import pandas as pd
 import numpy as np
 import sqlalchemy
@@ -911,7 +911,6 @@ def update_datepicker_periodly(n_clicks,n_intervals):
 )
 
 def update_button_display(meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
-    print(str(meter_n_clicks) + ' ' + str(lc_n_clicks) + ' ' + str(hc_n_clicks) + ' ' + str(other_n_clicks))
     if meter_n_clicks % 2 == 1:
         meter_class = 'selected_button'
     else:
