@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Query
 from sqlalchemy.sql import exists
 import datetime as dt
+from dateutil.relativedelta import relativedelta
 
 from apps.models import Cell
 from apps.models import ZQRaw
@@ -38,45 +39,134 @@ def find_consecutive_false_for_months(gdf):
     #     'eleven_month':{},
     #     'twelve_month':{},
     # }
-
+    print("New grp start ---------")
+    consecutive_false_dict = {}
     gdf = gdf.sort_values(by='notification_date', ascending=True)
-    date_ruler = []
-    current_date = dt.datetime.now()
-    #print(current_date)
-    for i in range(12):
-        current_date += relativedelta(months=-1)
-        #print(current_date)
-        date_ruler.append(current_date)
+    # date_ruler = []
+    # for i in range(12):
+    #     current_date += relativedelta(months=-1)
+    #     date_ruler.append(current_date)
+    # print(date_ruler)
 
-    false_count = 0
+    #false_count = [0] * 13
     mem_list = [0] * 13
+    date_buoy = gdf['notification_date'].iloc[0]
+    first = True
     for i, r in gdf.iterrows():
-        if r['prediction'] == False:
-            false_count += 1
-        elif r['prediction'] == True:
-            false_count = 0
-        
-        #pointer_name = r['notification_no']
-        pointer_pos = r['notification_date']
+        # if r['prediction'] == False:
+        #     false_count += 1
+        # elif r['prediction'] == True:
+        #     false_count = 0
+        point_pred = r['prediction']
+        point_pos = r['notification_date']
+        print(i)
+        print(dt.datetime.strftime(point_pos,"%Y-%m-%d") + " " + str(point_pred))
+        if first:
+            first = False
+            if not point_pred:
+                mem_list = [1] * 13
+            #date_buoy = point_pos
+        else:
+            loop_date = date_buoy + relativedelta(months=+1)
+            loop_count = 0
+            while (loop_date <= point_pos) & (loop_count < 12):
+                loop_count += 1
+                loop_date += relativedelta(months=+1)
 
-        loop_flag = False
-        for i in range(13):
-            if i == 0:
-                if pointer_pos >= date_ruler[i]:
-                    loop_flag = True
-                    if false_count != mem_list[i]:
-                        mem_list = false_count
-            elif i == 12:
-                if false_count != mem_list[i]:
-                    mem_list[i] = false_count
+            if loop_count == 0:
+                if not point_pred:
+                    for i in mem_list:
+                        i += 1
+                print("less than 1 month")
+            elif loop_count >= 12:
+                if point_pred:
+                    mem_list[12] = 0
+                else:
+                    mem_list[12] += 1
+                print("more than 12 month")
             else:
-                if (pointer_pos < date_ruler[i]) & (pointer_pos >= date_ruler[i]):
-                    loop_flag = True
-                    if false_count != mem_list[i]:
-                        mem_list[i:] = false_count
+                if point_pred:
+                    for temp in range(i,13):
+                        mem_list[temp] = 0
+                else:
+                    for temp in range(i,13):
+                        mem_list[temp] += 1
+                print("before month: " + str(i+1))
 
-            if loop_flag:
-                break
+            date_buoy = point_pos
+
+        print(mem_list)      
+        consecutive_false_dict[r['notification_no']] = mem_list
+                    
+            # loop_flag = False
+            # for i in range(13):
+            #     if i == 0:
+            #         if point_pos >= date_ruler[i]:
+            #             loop_flag = True
+            #             if point_pred:
+            #                 mem_list = 0
+            #             else:
+            #                 mem_list += 1
+            #             #print("less than 1 month")
+            #             #print(mem_list)
+            #     elif i == 12:
+            #         if point_pred:
+            #             mem_list[i] = 0
+            #         else:
+            #             mem_list[i] += 1
+            #             #print("more than 12 month")
+            #             #print(mem_list)
+            #     else:
+            #         if (point_pos < date_ruler[i-1]) & (point_pos >= date_ruler[i]):
+            #             loop_flag = True
+            #             if point_pred:
+            #                 for temp in range(i,13):
+            #                     mem_list[temp] = 0
+            #             else:
+            #                 for temp in range(i,13):
+            #                     mem_list[temp] += 1
+            #             #print("before month: " + str(i+1))
+            #             #print(mem_list)
+
+            #     if loop_flag:
+            #         break
+            
+            
+
+        #print(dt.datetime.strftime(point_pos,"%Y-%m-%d") + " " + str(point_pred))
+        # loop_flag = False
+        # for i in range(13):
+        #     if i == 0:
+        #         if point_pos >= date_ruler[i]:
+        #             loop_flag = True
+        #             if point_pred:
+        #                 mem_list = 0
+        #             else:
+        #                 mem_list += 1
+        #             #print("less than 1 month")
+        #             #print(mem_list)
+        #     elif i == 12:
+        #         if point_pred:
+        #             mem_list[i] = 0
+        #         else:
+        #             mem_list[i] += 1
+        #             #print("more than 12 month")
+        #             #print(mem_list)
+        #     else:
+        #         if (point_pos < date_ruler[i-1]) & (point_pos >= date_ruler[i]):
+        #             loop_flag = True
+        #             if point_pred:
+        #                 for temp in range(i,13):
+        #                     mem_list[temp] = 0
+        #             else:
+        #                 for temp in range(i,13):
+        #                     mem_list[temp] += 1
+        #             #print("before month: " + str(i+1))
+        #             #print(mem_list)
+
+        #     if loop_flag:
+        #         break
+        # consecutive_false_dict[r['notification_no']] = mem_list
 
         # if pointer_pos >= date_ruler[0]:
         #     if false_count != mem_list[0]:
@@ -130,10 +220,9 @@ def find_consecutive_false_for_months(gdf):
         #     if false_count != mem_list[12]:
         #         mem_list[12] = false_count
             #consecutive_false_dict['whole'][pointer_name] = false_count
-    gdf['consecutive_false'] = mem_list[12]
+    gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[12])
     for i in range(12):
-        m = str(i + 1)
-        gdf['consec_false_{}month'.format(m)] = mem_list[i]
+        gdf['consec_false_{}month'.format(str(i + 1))] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[i])
     # gdf['consec_false_1month'] = mem_list[0]
     # gdf['consec_false_2month'] = mem_list[1]
     # gdf['consec_false_3month'] = mem_list[2]
@@ -229,13 +318,66 @@ if __name__ == "__main__":
                 session.commit()
                 summary['insert'] += 1
             else:
-                if r['consecutive_false'] != _[0].consecutive_false:
-                    # update
+                ignore = True
+                # update
+                if r['consecutive_false'] != _[0].consecutive_false :
                     _[0].consecutive_false = r['consecutive_false']
-                    session.commit()
-                    summary['update'] += 1
-                else:
+                    ignore = False
+                    # session.commit()
+                if r['consec_false_1month'] != _[0].consec_false_1month :
+                    _[0].consec_false_1month = r['consec_false_1month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_2month'] != _[0].consec_false_2month:
+                    _[0].consec_false_2month = r['consec_false_2month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_3month'] != _[0].consec_false_3month:
+                    _[0].consec_false_3month = r['consec_false_3month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_4month'] != _[0].consec_false_4month:
+                    _[0].consec_false_4month = r['consec_false_4month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_5month'] != _[0].consec_false_5month:
+                    _[0].consec_false_5month = r['consec_false_5month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_6month'] != _[0].consec_false_6month:
+                    _[0].consec_false_6month = r['consec_false_6month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_7month'] != _[0].consec_false_7month:
+                    _[0].consec_false_7month = r['consec_false_7month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_8month'] != _[0].consec_false_8month:
+                    _[0].consec_false_8month = r['consec_false_8month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_9month'] != _[0].consec_false_9month:
+                    _[0].consec_false_9month = r['consec_false_9month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_10month'] != _[0].consec_false_10month:
+                    _[0].consec_false_10month = r['consec_false_10month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_11month'] != _[0].consec_false_11month:
+                    _[0].consec_false_11month = r['consec_false_11month']
+                    ignore = False
+                    #session.commit()
+                if r['consec_false_12month'] != _[0].consec_false_12month:
+                    _[0].consec_false_12month = r['consec_false_12month']
+                    ignore = False
+                    #session.commit()
+                session.commit()
+                if ignore:
                     summary['ignore'] += 1
+                    continue
+                else:
+                    summary['update'] += 1
                     continue
 
         try:

@@ -694,21 +694,6 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
             total_count -= temp_value
     return label_list,value_list,total_count
 
-# def find_consecutive_false(gdf):
-
-#     consecutive_false_dict = {}
-#     gdf = gdf.sort_values(by='notification_date', ascending=True)
-#     # global false_count
-#     false_count = 0 
-#     for i, r in gdf.iterrows():
-#         if r['prediction'] == False:
-#             false_count += 1
-#         elif r['prediction'] == True:
-#             false_count = 0
-#         consecutive_false_dict[r['notification_no']] = false_count
-
-#     gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x))
-#     return gdf
 
 #this callback uses filted data to updata char, status block, bar graph and so on.
 @app.callback(
@@ -750,8 +735,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     
     print("-------Counting summary page used time ----------")
     DB = DBmanager()
-    #DB.update_consecutive_false()
-    # print("Upadated DB, used time:", timeit.default_timer() - starttime)
 
     starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
