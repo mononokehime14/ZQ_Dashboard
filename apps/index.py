@@ -9,7 +9,7 @@ import re
 
 from apps.app import app
 from apps.data_manager import DBmanager, Cell
-from apps.pages import summary, search, records
+from apps.pages import summary, search, records, anomaly
 from apps.settings import VALID_PASSWORD, VALID_USER
 
 import sqlalchemy
@@ -167,6 +167,10 @@ def display_page(pathname):
         "/records": {
             "title": "Records",
             "layout": records.layout
+        },
+        "/anomaly": {
+            "title": "Anomaly",
+            "layout": anomaly.layout
         },
     }
 
