@@ -183,3 +183,22 @@ a.clickable-card:hover{
   /* width:120px; */
   font-size: 8px;
 }
+
+.self-checkbox-input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding: 2px;
+  margin-left: 5px;
+  border-color:#00b0b2;
+}
+
+.self-checkbox-label{
+  position:relative;
+  align-items:flex-start;
+  display:inline-block;
+  margin-right:.5rem;
+  padding-top:.125rem;
+  padding-right:.5rem;
+  cursor:pointer;
+}

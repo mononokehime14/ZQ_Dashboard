@@ -144,6 +144,7 @@ class DBmanager:
     def query(self,input_text):
         session = self.session
         starttime = timeit.default_timer()
+        input_text = input_text.strip()
         df = pd.read_sql(session.query(Cell).filter(or_(Cell.notification_no == input_text, Cell.meter_no == input_text, Cell.contract_acct == input_text)).statement,session.bind)
         print("Searching done, used time:", timeit.default_timer() - starttime)
         return df
@@ -209,6 +210,7 @@ class DBmanager:
         if result is None:
             result = dt.datetime.now()
         return result.date()
+    
 
         
 

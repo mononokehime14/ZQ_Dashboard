@@ -58,7 +58,7 @@ def datatable():
                     'overflowX': 'auto'
                 }
             ),
-        ]
+        ],
     )
 
 def manipulation_bar():
@@ -87,6 +87,7 @@ def manipulation_bar():
                     html.Button([],id='fake_button_to_force_refresh',style={'display':'none'},n_clicks = 1),
                 ],
                 id = 'date-picker-ranger-div',
+                className = 'u-pv2 forchecking',
             ),
             html.Div(
                 [
@@ -100,12 +101,18 @@ def manipulation_bar():
                             {'label': 'above 5', 'value': 'above 5'},
                         ],
                         value=['2', '3','4','5','above 5'],
+                        labelClassName = 'self-checkbox-label',
+                        inputClassName = 'self-checkbox-input',
                         id = 'consec_number_checklist',
+                        #style={'text-align':'center'},
+                        className = 'u-pt4',
                     ) 
                 ],
                 id = 'consec-number-focused-div',
+                className = 'u-pb2 forchecking',
             ),
         ],
+        className = 'u-grid forchecking',
     )
 
 layout = [
@@ -114,20 +121,22 @@ layout = [
             # Main Content
             html.Div(
                 [
-                    #left: Datatable block
+                    #top: Manipulation block
+                    html.Div(
+                        [
+                            manipulation_bar(),
+                        ],
+                    ),
+                    #bottom: Datatable block
                     html.Div(
                         [
                             datatable(),
                         ],
                         id = 'datatable-div',
                     ),
-                    #right: Manipulation block
-                    html.Div(
-                        [
-                            manipulation_bar(),
-                        ],
-                    ),
-                ]
+                ],
+                className="mainContent u-ph1@md u-ph3@lg",
+                style = {'background':'#fff'},
             ),
         ],
     ),
@@ -149,29 +158,31 @@ def update_datepicker_periodly(n_clicks,n_intervals):
     min_date = get_min_date()
     return [max_date + dt.timedelta(days=1),min_date,max_date,min_date,max_date]
 
-def extract_consec_false(gdf,start_date):
-    # gdf = gdf.sort_values(by='notification_date', descending=True)
+def extract_consec_false(gdf):
     if len(gdf) == 1:
         row = gdf.iloc[0]
     else:
         index = gdf['notification_date'].argmax()
         row = gdf.iloc[index]
-    
-    row_date = row['notification_date']
-    date_buoy = start_date 
-    loop_count = 0
-    if date_buoy == row_date:
-        pass
-    else:
-        date_buoy += relativedelta(months=+1)
-        while (date_buoy <= row_date) & (loop_count < 12):
-            date_buoy += relativedelta(months=+1)
-            loop_count += 1
-    
-    if loop_count >= 12:
-        pass
-    else:
-        row['consecutive_false'] = row['consec_false_{}month'.format(str(loop_count + 1))]
+
+    # row_date = row['notification_date']
+    # date_buoy = start_date 
+    # loop_count = 0
+    # if date_buoy == row_date:
+    #     pass
+    # else:
+    #     date_buoy += relativedelta(months=+1)
+    #     while (date_buoy <= row_date) & (loop_count < 12):
+    #         date_buoy += relativedelta(months=+1)
+    #         loop_count += 1
+
+    #loop_count = int((row['notification_date'] - start_date) / dt.timedelta(days=30))
+
+    # if loop_count >= 12:
+    #     pass
+    # else:
+    #     row['consecutive_false'] = row['consec_false_{}month'.format(str(loop_count + 1))]
+
     return row
 
 @app.callback(
@@ -211,19 +222,27 @@ def update_data_table(start_date,end_date,checklist):
     
     print("[Anomly Page]Step 1: Fetching initial data accomplished, used time:", timeit.default_timer() - starttime)
     starttime = timeit.default_timer()
-    group_dfs = []
-    for n, g in df.groupby(['meter_no', 'contract_acct']):
-        _  = extract_consec_false(g,start_date)
-        group_dfs.append(_)
+    # group_dfs = []
+    # for n, g in df.groupby(['meter_no', 'contract_acct']):
+    #     _  = extract_consec_false(g)
+    #     group_dfs.append(_)
+    # df1 = pd.DataFrame()
+    # df1 = df1.append(group_dfs)
+    idx = df.groupby(['meter_no','contract_acct'])['notification_date'].transform(max) == df['notification_date']
+    df1 = df[idx]
 
-    df1 = pd.DataFrame()
-    df1 = df1.append(group_dfs)
-    print(df1.head(10))
-    print("[Anomly Page] Step 2: Calculating results finished, used time:", timeit.default_timer() - starttime)
+    print("[Anomly Page] Step 2: Concating results finished, used time:", timeit.default_timer() - starttime)
     starttime = timeit.default_timer()
     if df1.empty:
         return None
-
+    
+    period = int((end_date - start_date) / dt.timedelta(days=30))
+    if period >= 12:
+        pass
+    else:
+        df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+    print("[Anomly Page]Step 3: Calculating results finished, used time:", timeit.default_timer() - starttime)
+    starttime = timeit.default_timer()
     drop_columns = list(set(df.columns) - set(display_columns))
     df1.drop(drop_columns,axis=1,inplace= True)
 
@@ -236,7 +255,7 @@ def update_data_table(start_date,end_date,checklist):
         else:
             checklist_value.append(int(i))
     df2 = df1[df1['consecutive_false'].isin(checklist_value)]
-    print("[Anomly Page]Step 3: Truncating unneeded data finished, used time:", timeit.default_timer() - starttime)
+    print("[Anomly Page]Step 4: Truncating unneeded data finished, used time:", timeit.default_timer() - starttime)
     starttime = timeit.default_timer()
     df2 = df2.sort_values(by = 'consecutive_false',ascending= False)
     print("[Anomly Page] Final Step: Sorting finished, used time:", timeit.default_timer() - starttime)

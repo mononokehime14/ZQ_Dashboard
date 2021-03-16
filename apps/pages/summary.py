@@ -461,11 +461,21 @@ def generate_substation_health_card_values(fig, total_count, ok_count,infected,i
         ),
     ], [f"{ok_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
-def draw_consecutive_true_bar(df):
+def draw_consecutive_true_bar(df,start_date,end_date):
     if df.empty:
         return None
-    dff = df.groupby(['consecutive_false'])['notification_no'].size()
-    dff = dff.iloc[1:]
+
+    idx = df.groupby(['meter_no','contract_acct'])['notification_date'].transform(max) == df['notification_date']
+    df1 = df[idx]
+    if df1.empty:
+        return None
+    period = int((end_date - start_date) / dt.timedelta(days=30))
+    if period >= 12:
+        pass
+    else:
+        df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+    dff = df1.groupby(['consecutive_false'])['notification_no'].size()
+    dff = dff.drop(labels = 0)
     fig = go.Figure()
     fig.add_trace(go.Bar(y = dff,
                     x = dff.index,
@@ -835,7 +845,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     content = generate_substation_health_card_values(fig, total_count, meter_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
 
-    bar = draw_consecutive_true_bar(df_for_bar)
+    bar = draw_consecutive_true_bar(df_for_bar,start_date,end_date)
     output.append(bar)
 
     if not df_for_bar.empty:
