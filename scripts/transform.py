@@ -23,22 +23,6 @@ session = sessionmaker(bind=engine)()
 #month_list = ['one_month','two_month','three_month','four_month','five_month','six_month','seven_month', 'eight_month','nine_month','ten_month','eleven_month','twelve_month','whole']
 
 def find_consecutive_false_for_months(gdf):
-
-    # consecutive_false_dict = {
-    #     'whole':{},
-    #     'one_month':{},
-    #     'two_month':{},
-    #     'three_month':{},
-    #     'four_month':{},
-    #     'five_month':{},
-    #     'six_month':{},
-    #     'seven_month':{},
-    #     'eight_month':{},
-    #     'nine_month':{},
-    #     'ten_month':{},
-    #     'eleven_month':{},
-    #     'twelve_month':{},
-    # }
     print("New grp start ---------")
     consecutive_false_dict = {}
     gdf = gdf.sort_values(by='notification_date', ascending=True)
@@ -59,167 +43,39 @@ def find_consecutive_false_for_months(gdf):
         #     false_count = 0
         point_pred = r['prediction']
         point_pos = r['notification_date']
-        print(i)
+        local_list = [0] * 13
+        if point_pred:
+            pass
+        else:
+            local_list = [1] * 13
+
         print(dt.datetime.strftime(point_pos,"%Y-%m-%d") + " " + str(point_pred))
         if first:
             first = False
-            if not point_pred:
-                mem_list = [1] * 13
-            #date_buoy = point_pos
         else:
-            loop_date = date_buoy + relativedelta(months=+1)
-            loop_count = 0
-            while (loop_date <= point_pos) & (loop_count < 12):
-                loop_count += 1
-                loop_date += relativedelta(months=+1)
+            if not point_pred:
+                loop_date = date_buoy + relativedelta(months=+1)
+                loop_count = 0
+                while (loop_date < point_pos) & (loop_count < 12):
+                    loop_count += 1
+                    loop_date += relativedelta(months=+1)
 
-            if loop_count == 0:
-                if not point_pred:
-                    for i in mem_list:
-                        i += 1
-                print("less than 1 month")
-            elif loop_count >= 12:
-                if point_pred:
-                    mem_list[12] = 0
+                if loop_count >= 12:
+                    local_list[12] += mem_list[12]
+                    print("more than 12 month")
                 else:
-                    mem_list[12] += 1
-                print("more than 12 month")
-            else:
-                if point_pred:
-                    for temp in range(i,13):
-                        mem_list[temp] = 0
-                else:
-                    for temp in range(i,13):
-                        mem_list[temp] += 1
-                print("before month: " + str(i+1))
+                    mem_pointer = 0
+                    for n in range(loop_count,13):
+                        local_list[n] += mem_list[mem_pointer]
+                        mem_pointer += 1
+                    print("greater than {} but no futher than {}".format(str(loop_count),str(loop_count+1)))
 
-            date_buoy = point_pos
+        mem_list = local_list.copy()
+        date_buoy = point_pos
 
-        print(mem_list)      
-        consecutive_false_dict[r['notification_no']] = mem_list
-                    
-            # loop_flag = False
-            # for i in range(13):
-            #     if i == 0:
-            #         if point_pos >= date_ruler[i]:
-            #             loop_flag = True
-            #             if point_pred:
-            #                 mem_list = 0
-            #             else:
-            #                 mem_list += 1
-            #             #print("less than 1 month")
-            #             #print(mem_list)
-            #     elif i == 12:
-            #         if point_pred:
-            #             mem_list[i] = 0
-            #         else:
-            #             mem_list[i] += 1
-            #             #print("more than 12 month")
-            #             #print(mem_list)
-            #     else:
-            #         if (point_pos < date_ruler[i-1]) & (point_pos >= date_ruler[i]):
-            #             loop_flag = True
-            #             if point_pred:
-            #                 for temp in range(i,13):
-            #                     mem_list[temp] = 0
-            #             else:
-            #                 for temp in range(i,13):
-            #                     mem_list[temp] += 1
-            #             #print("before month: " + str(i+1))
-            #             #print(mem_list)
+        print(local_list)      
+        consecutive_false_dict[r['notification_no']] = local_list
 
-            #     if loop_flag:
-            #         break
-            
-            
-
-        #print(dt.datetime.strftime(point_pos,"%Y-%m-%d") + " " + str(point_pred))
-        # loop_flag = False
-        # for i in range(13):
-        #     if i == 0:
-        #         if point_pos >= date_ruler[i]:
-        #             loop_flag = True
-        #             if point_pred:
-        #                 mem_list = 0
-        #             else:
-        #                 mem_list += 1
-        #             #print("less than 1 month")
-        #             #print(mem_list)
-        #     elif i == 12:
-        #         if point_pred:
-        #             mem_list[i] = 0
-        #         else:
-        #             mem_list[i] += 1
-        #             #print("more than 12 month")
-        #             #print(mem_list)
-        #     else:
-        #         if (point_pos < date_ruler[i-1]) & (point_pos >= date_ruler[i]):
-        #             loop_flag = True
-        #             if point_pred:
-        #                 for temp in range(i,13):
-        #                     mem_list[temp] = 0
-        #             else:
-        #                 for temp in range(i,13):
-        #                     mem_list[temp] += 1
-        #             #print("before month: " + str(i+1))
-        #             #print(mem_list)
-
-        #     if loop_flag:
-        #         break
-        # consecutive_false_dict[r['notification_no']] = mem_list
-
-        # if pointer_pos >= date_ruler[0]:
-        #     if false_count != mem_list[0]:
-        #         mem_list = false_count
-        #     # consecutive_false_dict[i][pointer_name] = false_count for i in month_list
-        # elif (pointer_pos < date_ruler[0]) & (pointer_pos >= date_ruler[1]):
-        #     if false_count != mem_list[1]:
-        #         mem_list[1:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count for i in month_list[1:]
-        # elif (pointer_pos < date_ruler[1]) & (pointer_pos >= date_ruler[2]):
-        #     if false_count != mem_list[2]:
-        #         mem_list[2:] = false_count
-        #     # consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[2]) & (pointer_pos >= date_ruler[3]):
-        #     if false_count != mem_list[3]:
-        #         mem_list[3:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[3]) & (pointer_pos >= date_ruler[4]):
-        #     if false_count != mem_list[4]:
-        #         mem_list[4:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[4]) & (pointer_pos >= date_ruler[5]):
-        #     if false_count != mem_list[5]:
-        #         mem_list[5:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[5]) & (pointer_pos >= date_ruler[6]):
-        #     if false_count != mem_list[6]:
-        #         mem_list[6:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[6]) & (pointer_pos >= date_ruler[7]):
-        #     if false_count != mem_list[7]:
-        #         mem_list[7:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[7]) & (pointer_pos >= date_ruler[8]):
-        #     if false_count != mem_list[8]:
-        #         mem_list[8:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[8]) & (pointer_pos >= date_ruler[9]):
-        #     if false_count != mem_list[9]:
-        #         mem_list[9:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[9]) & (pointer_pos >= date_ruler[10]):
-        #     if false_count != mem_list[10]:
-        #         mem_list[10:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # elif (pointer_pos < date_ruler[10]) & (pointer_pos >= date_ruler[11]):
-        #     if false_count != mem_list[11]:
-        #         mem_list[11:] = false_count
-        #     #consecutive_false_dict[i][pointer_name] = false_count
-        # else:
-        #     if false_count != mem_list[12]:
-        #         mem_list[12] = false_count
-            #consecutive_false_dict['whole'][pointer_name] = false_count
     gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[12])
     for i in range(12):
         gdf['consec_false_{}month'.format(str(i + 1))] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[i])
@@ -375,10 +231,10 @@ if __name__ == "__main__":
                 session.commit()
                 if ignore:
                     summary['ignore'] += 1
-                    continue
+                    #continue
                 else:
                     summary['update'] += 1
-                    continue
+                    #continue
 
         try:
             session.commit()
