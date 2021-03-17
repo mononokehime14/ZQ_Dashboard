@@ -6,6 +6,7 @@ import timeit
 
 
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
@@ -58,6 +59,16 @@ def datatable():
                     'overflowX': 'auto'
                 }
             ),
+            dbc.Modal(
+                [
+                    dbc.ModalHeader([],id = 'modal-header'),
+                    dbc.ModalBody([],id = 'modal-body'),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close", className="ml-auto")
+                    ),
+                ],
+                id = "modal",
+            )
         ],
     )
 
@@ -263,3 +274,31 @@ def update_data_table(start_date,end_date,checklist):
     else:
         return df2.to_dict('records')
 
+
+@app.callback(
+    Output("modal", "is_open"),
+    [Input("data_table", "active_cell"), Input("close", "n_clicks")],
+    [State("modal", "is_open")],
+)
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+@app.callback(
+    [Output('modal-header','children'),
+    Output('modal-body','children')],
+    Input('data_table','active_cell'),
+    [State('data_table','data'),
+    State('data_table','columns')]
+)
+
+def update_modal(active_cell,rows,columns):
+    df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
+    if df.empty:
+        return [None,None]
+    
+    header = df.iloc[active_cell['row'],active_cell['column']]
+    header = str(header)
+    body = 'The SHAP graph has not been implemented yet~'
+    return [header,body]
