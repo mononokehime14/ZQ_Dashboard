@@ -10,8 +10,8 @@ test: build
 	--name $(TEST_POD_NAME) \
 	-p 8425:8425 \
 	-e DB_NAME=dash_db \
-	-e DB_USER=postgres \
-	-e DB_PASSWORD=1030 \
+	-e DB_USER=porter \
+	-e DB_PASSWORD=porter \
 	-e DB_HOST=$$IP \
 	-e VALID_USER=porter \
 	-e VALID_PASSWORD=porter \
@@ -25,8 +25,8 @@ run: build
 	--name $(TEST_POD_NAME) \
 	-p 8425:8425 \
 	-e DB_NAME=dash_db \
-	-e DB_USER=postgres \
-	-e DB_PASSWORD=1030 \
+	-e DB_USER=porter \
+	-e DB_PASSWORD=porter \
 	-e DB_HOST=$$IP \
 	-e VALID_USER=porter \
 	-e VALID_PASSWORD=porter \
