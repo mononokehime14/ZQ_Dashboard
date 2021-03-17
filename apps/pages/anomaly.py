@@ -20,9 +20,9 @@ from dateutil.relativedelta import relativedelta
 
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
-from apps.pages.records import display_columns
 from apps.pages.records import get_max_date, get_min_date
 
+display_columns = ['contract_acct','meter_no','notification_date','prediction','consecutive_false']
 def datatable():
     return html.Div(
         [
@@ -41,20 +41,22 @@ def datatable():
                 page_current= 0,
                 page_size= 20,
                 style_data={
-                    'width': '10%',
-                    'maxWidth': '100px',
-                    'minWidth': '100px',
+                    'width': '20%',
+                    'maxWidth': '200px',
                 },
-                style_cell_conditional=[
-                    {
-                        'if': {'column_id': 'notification_date'},
-                        'width': '15%'
-                    },
-                    {
-                        'if': {'column_id': 'cause_code'},
-                        'width': '15%'
-                    },
-                ],
+                style_cell = {
+                    'text-align':'center',
+                },
+                # style_cell_conditional=[
+                #     {
+                #         'if': {'column_id': 'notification_date'},
+                #         'width': '15%'
+                #     },
+                #     {
+                #         'if': {'column_id': 'cause_code'},
+                #         'width': '15%'
+                #     },
+                # ],
                 style_table={
                     'overflowX': 'auto'
                 }
@@ -98,7 +100,7 @@ def manipulation_bar():
                     html.Button([],id='fake_button_to_force_refresh',style={'display':'none'},n_clicks = 1),
                 ],
                 id = 'date-picker-ranger-div',
-                className = 'u-pv2 forchecking',
+                className = 'u-pv2',
             ),
             html.Div(
                 [
@@ -114,15 +116,29 @@ def manipulation_bar():
                         value=['2', '3','4','5','above 5'],
                         # labelClassName = 'self-checkbox-label',
                         # inputClassName = 'self-checkbox-input',
+                        labelStyle = {
+                                    'position':'relative',
+                                    'align-items':'flex-start',
+                                    'display':'inline-block',
+                                    'padding-left':'3px',
+                                    'padding-right':'10px',
+                                    },
+                        inputStyle = {
+                                    'border-width':'2px',
+                                    'border-color':'#00b0b2',
+                                    #'padding': '5px',
+                                    'display':'inline-block',
+                                    },
                         id = 'consec_number_checklist',
+                        style = {'text-align':'center'},
                         className = 'u-pt4',
                     ) 
                 ],
                 id = 'consec-number-focused-div',
-                className = 'u-pb2 forchecking',
+                className = 'u-pb2',
             ),
         ],
-        className = 'u-grid forchecking',
+        className = 'u-grid',
     )
 
 layout = [
