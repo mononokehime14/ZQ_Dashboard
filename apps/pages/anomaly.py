@@ -101,10 +101,9 @@ def manipulation_bar():
                             {'label': 'above 5', 'value': 'above 5'},
                         ],
                         value=['2', '3','4','5','above 5'],
-                        labelClassName = 'self-checkbox-label',
-                        inputClassName = 'self-checkbox-input',
+                        # labelClassName = 'self-checkbox-label',
+                        # inputClassName = 'self-checkbox-input',
                         id = 'consec_number_checklist',
-                        #style={'text-align':'center'},
                         className = 'u-pt4',
                     ) 
                 ],

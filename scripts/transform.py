@@ -23,7 +23,7 @@ session = sessionmaker(bind=engine)()
 #month_list = ['one_month','two_month','three_month','four_month','five_month','six_month','seven_month', 'eight_month','nine_month','ten_month','eleven_month','twelve_month','whole']
 
 def find_consecutive_false_for_months(gdf):
-    print("New grp start ---------")
+    #print("New grp start ---------")
     consecutive_false_dict = {}
     gdf = gdf.sort_values(by='notification_date', ascending=True)
     # date_ruler = []
@@ -49,7 +49,7 @@ def find_consecutive_false_for_months(gdf):
         else:
             local_list = [1] * 13
 
-        print(dt.datetime.strftime(point_pos,"%Y-%m-%d") + " " + str(point_pred))
+        #print(dt.datetime.strftime(point_pos,"%Y-%m-%d") + " " + str(point_pred))
         if first:
             first = False
         else:
@@ -73,7 +73,7 @@ def find_consecutive_false_for_months(gdf):
         mem_list = local_list.copy()
         date_buoy = point_pos
 
-        print(local_list)      
+        #print(local_list)      
         consecutive_false_dict[r['notification_no']] = local_list
 
     gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[12])

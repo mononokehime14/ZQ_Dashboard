@@ -461,20 +461,11 @@ def generate_substation_health_card_values(fig, total_count, ok_count,infected,i
         ),
     ], [f"{ok_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
-def draw_consecutive_true_bar(df,start_date,end_date):
+def draw_consecutive_true_bar(df):
     if df.empty:
         return None
 
-    idx = df.groupby(['meter_no','contract_acct'])['notification_date'].transform(max) == df['notification_date']
-    df1 = df[idx]
-    if df1.empty:
-        return None
-    period = int((end_date - start_date) / dt.timedelta(days=30))
-    if period >= 12:
-        pass
-    else:
-        df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
-    dff = df1.groupby(['consecutive_false'])['notification_no'].size()
+    dff = df.groupby(['consecutive_false'])['notification_no'].size()
     dff = dff.drop(labels = 0)
     fig = go.Figure()
     fig.add_trace(go.Bar(y = dff,
@@ -568,26 +559,6 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
                 t_dict[tlabel] = t_count
                 f_dict[tlabel] = f_count
             dt_pointer += relativedelta(months=+1)
-
-    # dt_pointer = start_date
-    # t_dict = {}
-    # f_dict = {}
-    # while(dt_pointer < end_date):
-    #     df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
-    #     if len(df_p) != 0:
-    #         t_count = len(df_p[df_p['prediction'] == True])
-    #         f_count = len(df_p[df_p['prediction'] == False])
-    #         if time_width.days == 1:
-    #             tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
-    #             t_dict[tlabel] = t_count
-    #             f_dict[tlabel] = f_count
-    #         else:
-    #             tlabel_front = dt.datetime.strftime(df_p['notification_date'].min(),"%-d %b")
-    #             tlabel_back = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
-    #             tlabel = f"{tlabel_front} - {tlabel_back}"
-    #             t_dict[tlabel] = t_count
-    #             f_dict[tlabel] = f_count
-    #     dt_pointer += time_width
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -704,6 +675,20 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
             total_count -= temp_value
     return label_list,value_list,total_count
 
+def extract_df(df,start_date,end_date):
+    if df.empty:
+        return None
+    idx = df.groupby(['meter_no','contract_acct'])['notification_date'].transform(max) == df['notification_date']
+    df1 = df[idx]
+    if df1.empty:
+        return None
+    period = int((end_date - start_date) / dt.timedelta(days=30))
+    if period >= 12:
+        pass
+    else:
+        df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+
+    return df1
 
 #this callback uses filted data to updata char, status block, bar graph and so on.
 @app.callback(
@@ -742,8 +727,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 
     # df['notification_date'] = pd.to_datetime(df['notification_date'])
     # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-    
-    print("-------Counting summary page used time ----------")
     DB = DBmanager()
 
     starttime = timeit.default_timer()
@@ -771,7 +754,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     
     if df.empty:
         return [None,None,None,None,None,None,None,None,None]
-    print("Getting initial data, used time:", timeit.default_timer() - starttime)
+    print("[Summary Page] Getting initial data, used time:", timeit.default_timer() - starttime)
 
     output = []
 
@@ -845,7 +828,9 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     content = generate_substation_health_card_values(fig, total_count, meter_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
 
-    bar = draw_consecutive_true_bar(df_for_bar,start_date,end_date)
+    df_for_bar = extract_df(df_for_bar,start_date,end_date)
+        
+    bar = draw_consecutive_true_bar(df_for_bar)
     output.append(bar)
 
     if not df_for_bar.empty:
@@ -869,7 +854,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     reduced_number_donut = draw_reduced_number_chart(true_count, false_count)
     output.append(reduced_number_donut)
     
-    print("All drawing acomplished, used time:", timeit.default_timer() - starttime)
+    print("[Summary Page] All drawing acomplished, used time:", timeit.default_timer() - starttime)
     return output    
 
 @app.callback(

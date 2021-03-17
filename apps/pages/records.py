@@ -274,24 +274,31 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
             min_date = dt.datetime.strptime(min_date,"%Y-%m-%d")
             if (start_date > max_date) | (start_date < min_date):
                 return [None,None,'Date selected exceeds range= =',None,None]
-
-        if trace_option == 'last 6 month':
-            end_date = start_date - dt.timedelta(days=180)
-        elif trace_option == 'last month':
-            end_date = start_date - dt.timedelta(days=30)
-        elif trace_option == 'last 3 month':
-            end_date = start_date - dt.timedelta(days=90)
-        elif trace_option == 'last year':
-            end_date = start_date - dt.timedelta(days=365)
-        elif trace_option == 'all time':
-            end_date = get_min_date()
-        else:
-            return [None,None,'Trace period not supported= =',None,None]
    
         DB = DBmanager()
         #DB.update_consecutive_false()
-        df = DB.trace_records(start_date,end_date)  
-        if df is not None:  
+        df = DB.trace_records(start_date)
+        
+        if df is not None: 
+
+            if trace_option == 'last 6 month':
+                df['consecutive_false'] = df['consec_false_6month']
+                #end_date = start_date - dt.timedelta(days=180)
+            elif trace_option == 'last month':
+                df['consecutive_false'] = df['consec_false_1month']
+                #end_date = start_date - dt.timedelta(days=30)
+            elif trace_option == 'last 3 month':
+                df['consecutive_false'] = df['consec_false_3month']
+                #end_date = start_date - dt.timedelta(days=90)
+            elif trace_option == 'last year':
+                df['consecutive_false'] = df['consec_false_12month']
+                #end_date = start_date - dt.timedelta(days=365)
+            elif trace_option == 'all time':
+                pass
+                #end_date = get_min_date()
+            else:
+                return [None,None,'Trace period not supported= =',None,None] 
+
             drop_columns = list(set(df.columns) - set(display_columns))
             df.drop(drop_columns,axis=1,inplace= True)
             df = df.sort_values(by = 'consecutive_false',ascending= False)
@@ -305,7 +312,7 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
             )]
             csv_string = df.to_csv(index=False, encoding='utf-8')
             csv_string = "data:text/csv;charset=utf-8," + urllib.parse.quote(csv_string)
-            print("Fetch records acomplished, used time:", timeit.default_timer() - starttime)
+            print("[Records Page] Fetch records acomplished, used time:", timeit.default_timer() - starttime)
             return [df.to_dict('records'),chart_content,f'True Prediction Rate: {rate}%',f'{dt.datetime.strftime(start_date,"%Y-%m-%d")}.csv',csv_string]
         else:
             return [None,None,'No records on that day',None,None]
