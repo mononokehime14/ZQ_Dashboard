@@ -1,4 +1,5 @@
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
@@ -34,23 +35,35 @@ def draw_datatable():
                 page_current= 0,
                 page_size= 20,
                 style_data={
-                    'width': '10%',
+                    'width': '14%',
                     'maxWidth': '100px',
-                    'minWidth': '100px',
                 },
-                style_cell_conditional=[
-                    {
-                        'if': {'column_id': 'notification_date'},
-                        'width': '15%'
-                    },
-                    {
-                        'if': {'column_id': 'cause_code'},
-                        'width': '15%'
-                    },
-                ],
+                style_cell = {
+                    'text-align':'center',
+                },
+                # style_cell_conditional=[
+                #     {
+                #         'if': {'column_id': 'notification_date'},
+                #         'width': '15%'
+                #     },
+                #     {
+                #         'if': {'column_id': 'cause_code'},
+                #         'width': '15%'
+                #     },
+                # ],
                 style_table={
                     'overflowX': 'auto'
                 }
+            ),
+            dbc.Modal(
+                [
+                    dbc.ModalHeader([],id = 'records-modal-header'),
+                    dbc.ModalBody([],id = 'records-modal-body'),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close", className="ml-auto")
+                    ),
+                ],
+                id = "records-modal",
             ),
         ]
     )
@@ -72,116 +85,88 @@ def draw_upper_block():
                 [
                     html.Div(
                         [
-                            html.Div(
-                                [
-                                    dcc.DatePickerSingle(
-                                        id='date_selector_single',
-                                        min_date_allowed=get_min_date(),
-                                        max_date_allowed=get_max_date(),
-                                        initial_visible_month=get_max_date(),
-                                        date=get_max_date(),
-                                        className = 'datepicker_for_records_page',
-                                        style = {'width':'100px','height':'44px'},
-                                    ),
-                                    dcc.Interval(
-                                        id='date_selector_interval',
-                                        interval=600*1000, # in milliseconds
-                                        n_intervals=0
-                                    ),
-                                    html.Button([],id='fake_button_to_force_refresh',style={'display':'none'},n_clicks = 1),
-                                ],
-                                id = 'date_selector_div',
-                                className = 'col-sm-3 col-md-3 col-lg-3 col-xl-3 u-cell',
+                            dcc.DatePickerSingle(
+                                id='date_selector_single',
+                                min_date_allowed=get_min_date(),
+                                max_date_allowed=get_max_date(),
+                                initial_visible_month=get_max_date(),
+                                date=get_max_date(),
+                                className = 'datepicker_for_records_page',
+                                style = {'width':'150px','height':'44px'},
                             ),
-                            html.Div(
-                                [
-                                    dcc.Dropdown(
-                                        id='consecutive_false_trace',
-                                        options=[
-                                            {'label': 'Last month', 'value': 'last month'},
-                                            {'label': 'Last 3 month', 'value': 'last 3 month'},
-                                            {'label': 'Last 6 month', 'value': 'last 6 month'},
-                                            {'label':'Last Year','value':'last year'},
-                                            {'label':'All Time','value':'all time'},
-                                        ],
-                                        value='all time',
-                                        style = {'width':'120px','height':'44px'},
-                                    ),
-                                ],
-                                id = 'consecutive_false_trace_div',
-                                className  = 'col-sm-3 col-md-3 col-lg-3 col-xl-3 u-cell',
+                            dcc.Interval(
+                                id='date_selector_interval',
+                                interval=600*1000, # in milliseconds
+                                n_intervals=0
                             ),
-                            # html.Div(
-                            #     [
-                            #         html.Button(
-                            #             'Apply',
-                            #             id= 'date_selector_button',
-                            #             n_clicks = 0,
-                            #             className = 'lm--button--primary u-mt1',
-                            #             style = {'height':'40px','width':'80px'}
-                            #         ),
-                            #     ],
-                            #     id = 'date_selector_button_div',
-                            #     className = 'col-sm-2 col-md-2 col-lg-2 col-xl-2 u-cell',
-                            # ),
-                            html.Div(
-                                [
-                                    html.Button(
-                                        [
-                                            html.A('Download',
-                                                id='download-link',
-                                                download="dayily_records.csv",
-                                                href="",
-                                                target="_blank",
-                                                style = {'color':'#FFFFFF'},
-                                            ),
-                                        ],
-                                        id= 'csv_download_button',
-                                        n_clicks = 0,
-                                        className = 'lm--button--primary u-mt1',
-                                        style = {'height':'40px','width':'80px'}
-                                    ),
+                            html.Button([],id='fake_button_to_force_refresh',style={'display':'none'},n_clicks = 1),
+                        ],
+                        style = {'margin-right':'5px'},
+                        id = 'date_selector_div',
+                    ),
+                    html.Div(
+                        [
+                            dcc.Dropdown(
+                                id='consecutive_false_trace',
+                                options=[
+                                    {'label': 'Last month', 'value': 'last month'},
+                                    {'label': 'Last 3 month', 'value': 'last 3 month'},
+                                    {'label': 'Last 6 month', 'value': 'last 6 month'},
+                                    {'label':'Last Year','value':'last year'},
+                                    {'label':'All Time','value':'all time'},
                                 ],
-                                id = 'csv_download_button_div',
-                                className = 'col-sm-2 col-md-2 col-lg-2 col-xl-2 u-cell',
+                                value='all time',
+                                style = {'width':'150px','height':'44px'},
                             ),
                         ],
-                        className = 'u-grid',
-                    ),  
+                        style = {'align-items':'center','margin-left':'5px'},
+                        id = 'consecutive_false_trace_div',
+                    ),
+                    html.Div(
+                        [
+                            html.Button(
+                                [
+                                    html.A('Download',
+                                        id='download-link',
+                                        download="dayily_records.csv",
+                                        href="",
+                                        target="_blank",
+                                        style = {'color':'#FFFFFF'},
+                                    ),
+                                ],
+                                id= 'csv_download_button',
+                                n_clicks = 0,
+                                className = 'lm--button--primary u-mt1',
+                                style = {'height':'40px','width':'80px'}
+                            ),
+                        ],
+                        style = {'align-items':'center','margin-left':'5px'},
+                        id = 'csv_download_button_div',
+                    ),
                 ],
-                className = 'col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell',
+                style = {'align-items':'center','display':'flex'},
+                className = 'col-sm-12 col-md-6 col-lg-6 col-xl-6 u-cell',
             ),
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
 
-                                        ],
-                                        id = 'little_chart',
-                                        className = 'col-sm-2 col-md-2 col-lg-2 col-xl-2 u-cell',
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.P("", className="h4",id = 'little_chart_label')
-                                        ],
-                                        className = 'col-sm-8 push-sm-2 col-md-8 push-md-2 col-lg-8 push-lg-2 push-xl-2 col-xl-8 u-cell',
-                                        style = {'display':'flex','text-align':'center'}
-                                    ),
-                                ],
-                                className = 'u-grid',
-                            )
                         ],
-                        
-                        style = {'text-align':'right'}
+                        id = 'little_chart',
+                    ),
+                    html.Div(
+                        [
+                            html.P("", className="h4",id = 'little_chart_label')
+                        ],
+                        style = {'width':'100%','padding-left':'5px'},
                     ),
                 ],
-                className = 'col-sm-3  col-md-3  col-lg-3 col-xl-3 u-cell',
+                style = {'display':'inline-flex','align-items':'center'},
+                className = 'col-md-6 col-lg-6 col-xl-6 u-cell',
             ),
         ],
+        style = {'max-hegiht':'50px'},
         className = 'lm--card u-pv2 u-grid',
     )                           
                                 
@@ -331,4 +316,32 @@ def update_datepicker_periodly(n_intervals,n_clicks):
     max_date = get_max_date()
     min_date = get_min_date()
     return [max_date,min_date,max_date,max_date]
+
+@app.callback(
+    Output("records-modal", "is_open"),
+    [Input("datatable", "active_cell"), Input("close", "n_clicks")],
+    [State("records-modal", "is_open")],
+)
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+@app.callback(
+    [Output('records-modal-header','children'),
+    Output('records-modal-body','children')],
+    Input('datatable','active_cell'),
+    [State('datatable','data'),
+    State('datatable','columns')]
+)
+
+def update_modal(active_cell,rows,columns):
+    df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
+    if df.empty:
+        return [None,None]
+    
+    header = df.iloc[active_cell['row'],active_cell['column']]
+    header = str(header)
+    body = 'The SHAP graph has not been implemented yet~'
+    return [header,body]
 
