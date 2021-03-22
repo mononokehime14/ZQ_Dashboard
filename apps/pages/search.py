@@ -2,7 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output, State, ClientsideFunction
+from dash.dependencies import Input, Output, State, ClientsideFunction, ALL
 from urllib.parse import urlparse, parse_qs
 import pandas as pd
 from pathlib import Path
@@ -121,11 +121,14 @@ def output_table():
         page_current= 0,
         page_size= 10,
         style_data={
-            'width': '25%',
+            'width': '16%',
         },
         style_table={
             'overflowX': 'auto'
-        }
+        },
+        style_cell= {
+            'text-align':'center',
+        },
     )
 
     
@@ -169,9 +172,9 @@ layout = [
                                 id = 'trend_graph_div',
                             ),
                         ],
-                        id = 'display_search_result_trend_block',
-                        className = 'u-mv1',
-                        #style = {'height':'100px'},
+                        id='display_search_result_trend_block',
+                        className='u-mv1',
+                        style={'width':'100%'},
                     ),
                     html.Div(
                         [
@@ -179,6 +182,7 @@ layout = [
                         ],
                         id = 'display_search_result_block',
                         className = 'u-mv1',
+                        style={'width':'100%'},
                     ),
                 ],
                 className="mainContent u-ph1@md u-ph3@lg",
@@ -209,83 +213,93 @@ layout = [
 @app.callback(
     [Output('trend_graph_div','children'),
     Output('output_datatable','data')],
+
     [Input('search_button','n_clicks'),
     Input('search_input_content','value')],
-    #State('memory-value','data')
+
+    [
+        State('records-cps','data'),
+        State('anomaly-cps','data'),
+    ]
 )
 
-def update_search_result(n_clicks,input_value):
-    if(n_clicks > 0) & (input_value is not None):
-        #df = pd.read_json(df,orient="split")
-        DB = DBmanager()
-        #engine = DB.engine
-        #DB.test_add_multiple()
-        #DB.start_over()
-        #DB.update_consecutive_false()
-
-        #df = pd.read_sql_table('notificationlist',con = engine)
-        #df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-        #output = df[(df['notification_no'] == input_value) | (df['contract_acct'] == input_value) | (df['meter_no'] == input_value)]
-        output = DB.query(input_value)
-
-
-        if output.empty:
-            return [None,None]
+def update_search_result(n_clicks,input_value,records_cps,anomaly_cps):
+    if input_value is None:
+        if records_cps is None:
+            if anomaly_cps is None:
+                return [None,None]
+            else:
+                print('Search page receive input from records:' + anomaly_cps)
+                input_value = anomaly_cps
         else:
-            # output_display = []
-            # output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
-            output = output.sort_values(by = 'notification_date',ascending=True,axis =0)
-            drop_columns = list(set(output.columns) - set(display_columns))
-            output_display = output.drop(drop_columns,axis=1)
-            output_display['notification_date'] = output_display['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
-            #false_count = 0
-            #output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x,false_count))
-            x = output['notification_date']
-            y = output['consecutive_false']
-            fig = go.Figure()
-            fig.add_trace(
-                go.Scatter(
-                    x = x,
-                    y = y,
-                    name = 'linear',
-                    line_shape = 'hvh',
-                )
-            )
-            fig.update_traces(
-                mode = 'lines+markers',
-            )
-            fig.update_layout(
-                margin = dict(t=10,r=5,l=5,b=10),
-                yaxis = dict(
-                    tickmode = 'array',
-                    tickvals = y.unique(),
-                    zeroline = True,
-                    showgrid =  False,
-                    showline = True,
-                    linecolor = '#4F5A60',
-                    title_text = 'Prediction',
-                ),
-                xaxis = dict(
-                    tickmode = 'array',
-                    tickvals = x,
-                    showgrid = False,
-                    showspikes = True,
-                    showline = True,
-                    linecolor = '#4F5A60',
-                    title_text = 'Time',
-                ),
-                paper_bgcolor = '#fff',
-                plot_bgcolor = '#fff',
-            )
-            trend_graph = [
-                dcc.Graph(
-                    id = 'trend_graph_plot',
-                    figure = fig,
-                    config={'displayModeBar': False,
-                            'responsive': True},
-                    style = {'width':'100%','height':'200px'},
-                )
-            ]
-            return [trend_graph, output_display.to_dict('record')]
-    else:
+            print('Search page receive input from anomaly:' + records_cps)
+            input_value = records_cps
+
+    # if (input_value is None) | (n_clicks <= 0):
+    #     return [None,None]
+
+    DB = DBmanager()
+    output = DB.query(input_value)
+
+
+    if output.empty:
         return [None,None]
+
+    # output_display = []
+    # output.apply(lambda x: turn_into_display_list(x,output_display),axis = 1)
+    output = output.sort_values(by = 'notification_date',ascending=True,axis =0)
+    drop_columns = list(set(output.columns) - set(display_columns))
+    output_display = output.drop(drop_columns,axis=1)
+    output_display['notification_date'] = output_display['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
+    #false_count = 0
+    #output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x,false_count))
+    x = output['notification_date']
+    y = output['consecutive_false']
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x = x,
+            y = y,
+            name = 'linear',
+            line_shape = 'hvh',
+        )
+    )
+    fig.update_traces(
+        mode = 'lines+markers',
+    )
+    fig.update_layout(
+        margin = dict(t=10,r=5,l=5,b=10),
+        yaxis = dict(
+            tickmode = 'array',
+            tickvals = y.unique(),
+            zeroline = True,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+            title_text = 'Prediction',
+        ),
+        xaxis = dict(
+            tickmode = 'array',
+            tickvals = x,
+            showgrid = False,
+            showspikes = True,
+            showline = True,
+            linecolor = '#4F5A60',
+            title_text = 'Time',
+        ),
+        paper_bgcolor = '#fff',
+        plot_bgcolor = '#fff',
+    )
+    trend_graph = [
+        dcc.Graph(
+            id = 'trend_graph_plot',
+            figure = fig,
+            config={'displayModeBar': False,
+                    'responsive': True},
+            style = {'width':'100%','height':'200px'},
+        )
+    ]
+    return [trend_graph, output_display.to_dict('record')]
+    # else:
+    #     return [None,None]
+    

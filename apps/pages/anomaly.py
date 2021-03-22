@@ -66,11 +66,23 @@ def datatable():
                     dbc.ModalHeader([],id = 'modal-header'),
                     dbc.ModalBody([],id = 'modal-body'),
                     dbc.ModalFooter(
-                        dbc.Button("Close", id="close", className="ml-auto")
+                        [
+                            dbc.Button(
+                                [
+                                    dcc.Link('Search', href='/search'),
+                                ],
+                                n_clicks=0,
+                                className='ml-auto',
+                            ),
+                            html.Div(style ={'width':'60%','display':'inline-block'}),
+                            dbc.Button("Close", id="close", className="ml-auto")
+                        ],
+                        style={'text-align':'left'},
                     ),
                 ],
                 id = "modal",
-            )
+                centered=True,
+            ),
         ],
     )
 
@@ -144,6 +156,7 @@ def manipulation_bar():
 layout = [
     html.Div(
         [
+            html.A('',id='anomaly-fake-cps',style={'display':'none'}),
             # Main Content
             html.Div(
                 [
@@ -285,6 +298,7 @@ def update_data_table(start_date,end_date,checklist):
     starttime = timeit.default_timer()
     df2 = df2.sort_values(by = 'consecutive_false',ascending= False)
     print("[Anomly Page] Final Step: Sorting finished, used time:", timeit.default_timer() - starttime)
+    df2['notification_date'] = df2['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
     if df2.empty:
         return None
     else:
@@ -294,17 +308,27 @@ def update_data_table(start_date,end_date,checklist):
 @app.callback(
     Output("modal", "is_open"),
     [Input("data_table", "active_cell"), Input("close", "n_clicks")],
-    [State("modal", "is_open")],
+    
+    State("modal", "is_open"),
+        
 )
 def toggle_modal(n1, n2, is_open):
+    allow_list = ['meter_no','notification_no','contract_acct']
     if n1 or n2:
-        return not is_open
+        if n1['column_id'] in allow_list:
+            return not is_open
+
     return is_open
 
 @app.callback(
-    [Output('modal-header','children'),
-    Output('modal-body','children')],
+    [
+        Output('modal-header','children'),
+        Output('modal-body','children'),
+        Output('anomaly-fake-cps','children'),
+    ],
+
     Input('data_table','active_cell'),
+
     [State('data_table','data'),
     State('data_table','columns')]
 )
@@ -312,9 +336,22 @@ def toggle_modal(n1, n2, is_open):
 def update_modal(active_cell,rows,columns):
     df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
     if df.empty:
-        return [None,None]
+        return [None,None,None]
     
     header = df.iloc[active_cell['row'],active_cell['column']]
     header = str(header)
     body = 'The SHAP graph has not been implemented yet~'
-    return [header,body]
+    return [header,body,header]
+
+@app.callback(
+    Output('anomaly-cps','data'),
+
+    Input('anomaly-fake-cps','children'),
+)
+
+def update_real_cp_string(fake_string):
+    if fake_string is None:
+        return None
+
+    # print('gen xin la ' + fake_string)
+    return fake_string

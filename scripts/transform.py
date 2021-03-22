@@ -26,21 +26,11 @@ def find_consecutive_false_for_months(gdf):
     #print("New grp start ---------")
     consecutive_false_dict = {}
     gdf = gdf.sort_values(by='notification_date', ascending=True)
-    # date_ruler = []
-    # for i in range(12):
-    #     current_date += relativedelta(months=-1)
-    #     date_ruler.append(current_date)
-    # print(date_ruler)
 
-    #false_count = [0] * 13
     mem_list = [0] * 13
     date_buoy = gdf['notification_date'].iloc[0]
     first = True
     for i, r in gdf.iterrows():
-        # if r['prediction'] == False:
-        #     false_count += 1
-        # elif r['prediction'] == True:
-        #     false_count = 0
         point_pred = r['prediction']
         point_pos = r['notification_date']
         local_list = [0] * 13
@@ -79,18 +69,6 @@ def find_consecutive_false_for_months(gdf):
     gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[12])
     for i in range(12):
         gdf['consec_false_{}month'.format(str(i + 1))] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x)[i])
-    # gdf['consec_false_1month'] = mem_list[0]
-    # gdf['consec_false_2month'] = mem_list[1]
-    # gdf['consec_false_3month'] = mem_list[2]
-    # gdf['consec_false_4month'] = mem_list[3]
-    # gdf['consec_false_5month'] = mem_list[4]
-    # gdf['consec_false_6month'] = mem_list[5]
-    # gdf['consec_false_7month'] = mem_list[6]
-    # gdf['consec_false_8month'] = mem_list[7]
-    # gdf['consec_false_9month'] = mem_list[8]
-    # gdf['consec_false_10month'] = mem_list[9]
-    # gdf['consec_false_11month'] = mem_list[10]
-    # gdf['consec_false_12month'] = mem_list[11]
 
     # gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x))
     return gdf
@@ -128,7 +106,7 @@ if __name__ == "__main__":
         try:
             session.bulk_save_objects(to_be_inserted)
             session.commit()
-            num_inserted += len(chunk)
+            #num_inserted += len(chunk)
         except:
             session.rollback()
             print("We encouter unknown situation at chunk {} ({} - {})".format(ind, chunk_size*ind, (ind+1)*chunk_size-1))

@@ -466,7 +466,7 @@ def draw_consecutive_true_bar(df):
         return None
 
     dff = df.groupby(['consecutive_false'])['notification_no'].size()
-    dff = dff.drop(labels = 0)
+    dff = dff.drop(labels = [0,1])
     fig = go.Figure()
     fig.add_trace(go.Bar(y = dff,
                     x = dff.index,

@@ -1,16 +1,18 @@
+import urllib.parse
+import sqlalchemy
+import timeit
+import math
+import json
+
 import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_table
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output, State, ClientsideFunction
+from dash.dependencies import Input, Output, State, ClientsideFunction, ALL, MATCH
 import pandas as pd
 from pathlib import Path
-import math
 import datetime as dt
-import urllib.parse
-import sqlalchemy
-import timeit
 
 from apps.data_manager import DBmanager,Cell
 from apps.app import app
@@ -60,11 +62,25 @@ def draw_datatable():
                     dbc.ModalHeader([],id = 'records-modal-header'),
                     dbc.ModalBody([],id = 'records-modal-body'),
                     dbc.ModalFooter(
-                        dbc.Button("Close", id="close", className="ml-auto")
+                        [
+                            dbc.Button(
+                                [
+                                    dcc.Link('Search',id = 'search', href='/search'),
+                                ],
+                                n_clicks=0,
+                                id='search_button',
+                                className='ml-auto',
+                            ),
+                            html.Div(style ={'width':'60%','display':'inline-block'}),
+                            dbc.Button("Close", id="close", className="ml-auto")
+                        ],
+                        style={'text-align':'left'},
                     ),
                 ],
                 id = "records-modal",
+                centered=True,
             ),
+            html.A('',id= 'fake-records-cps',style ={'display':'none'}),
         ]
     )
 
@@ -174,7 +190,6 @@ def draw_upper_block():
 layout = [
     html.Div(
         [
-            dcc.Store(id="temp_for_download",storage_type='local'),
             # Main Content
             html.Div(
                 [
@@ -287,6 +302,7 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
             drop_columns = list(set(df.columns) - set(display_columns))
             df.drop(drop_columns,axis=1,inplace= True)
             df = df.sort_values(by = 'consecutive_false',ascending= False)
+            df['notification_date'] = df['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
             true_count = len(df[df['prediction'] == True])
             false_count = len(df) - true_count            
             rate = int((true_count / (true_count + false_count)) * 100)
@@ -317,20 +333,59 @@ def update_datepicker_periodly(n_intervals,n_clicks):
     min_date = get_min_date()
     return [max_date,min_date,max_date,max_date]
 
+# @app.callback(
+#     [
+#         Output("records-modal", "is_open"),
+#         Output('records-modal-header','children'),
+#         Output('records-modal-body','children'),
+#     ],
+
+#     Input("close", "n_clicks"),
+
+#     [
+#         State("datatable", "active_cell"), 
+#         State("records-modal", "is_open"),
+#         State('datatable','data'),
+#         State('datatable','columns'),
+#     ],
+# )
+# def toggle_modal(n1, n2, is_open,rows,columns):
+#     print("neng jin ru")
+#     if n1 or n2:
+#         if n2:
+#             df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
+#             if df.empty:
+#                 header,body = None,None
+#             header = df.iloc[n2['row'],n2['column']]
+#             header = str(header)
+#             body = 'The SHAP graph has not been implemented yet~'
+#             return [not is_open,header,body]
+#         else:
+#             return [not is_open,None,None]
+#     return [is_open,None,None]
 @app.callback(
     Output("records-modal", "is_open"),
     [Input("datatable", "active_cell"), Input("close", "n_clicks")],
-    [State("records-modal", "is_open")],
+    
+    State("records-modal", "is_open"),
+    
 )
 def toggle_modal(n1, n2, is_open):
+    allow_list = ['meter_no','notification_no','contract_acct']
     if n1 or n2:
-        return not is_open
+        if n1['column_id'] in allow_list:
+            return not is_open
     return is_open
+
+
 
 @app.callback(
     [Output('records-modal-header','children'),
-    Output('records-modal-body','children')],
+    Output('records-modal-body','children'),
+    Output('fake-records-cps','children')],
+
     Input('datatable','active_cell'),
+
     [State('datatable','data'),
     State('datatable','columns')]
 )
@@ -338,10 +393,57 @@ def toggle_modal(n1, n2, is_open):
 def update_modal(active_cell,rows,columns):
     df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
     if df.empty:
-        return [None,None]
+        return [None,None,None]
     
     header = df.iloc[active_cell['row'],active_cell['column']]
     header = str(header)
     body = 'The SHAP graph has not been implemented yet~'
-    return [header,body]
 
+    return [header,body,header]
+
+# @app.callback(
+#     Output('fake-cross-page-string','children'),
+    
+#     Input("search_button", "n_clicks"),
+
+
+#     [
+#         State('datatable','active_cell'),
+#         State('datatable','data'),
+#         State('datatable','columns')
+#     ]
+# )
+
+# def update_cross_page_string(n_clicks,active_cell,rows,columns):
+#     if n_clicks > 0:
+#         print("chufa")
+#         if not active_cell:
+#             return None
+
+#         df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
+#         if df.empty:
+#             return None
+        
+
+
+#         string = df.iloc[active_cell['row'],active_cell['column']]
+#         string = str(string)
+#         print(string)
+#         # test_string = string
+#         # print(test_string)
+#         return string
+#     else:
+#         return ''
+
+@app.callback(
+    Output('records-cps','data'),
+
+    Input('fake-records-cps','children'),
+)
+
+def update_real_cp_string(fake_string):
+    if fake_string is None:
+        return None
+
+    # print('gen xin la ' + fake_string)
+    return fake_string

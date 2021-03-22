@@ -33,55 +33,13 @@ auth = dash_auth.BasicAuth(
     app,
     VALID_USERNAME_PASSWORD_PAIRS
 )
-#DB = DBmanager()
-# DB.start_over()
-#DB.update_consecutive_false_for_whole()
-# conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-# engine = sqlalchemy.create_engine(conn_url)
-# df = pd.read_sql_table('notificationlist',con = engine)
 
-# df = pd.read_csv('data/combined.csv',parse_dates=['notification_date'],dayfirst=True)
-# df['notification_date'] = pd.to_datetime(df['notification_date'])
-# #df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
-
-# def find_consecutive_false(group):
-#     if(len(group) > 1):
-#         group = group.sort_values(by = 'notification_date',ascending = True)
-#         false_count = 0
-#         for index,row2 in group.iterrows():
-#             if row2['prediction'] == 'False':
-#                 false_count += 1
-#             elif row2['prediction'] == 'True':
-#                 false_count = 0
-#             consecutive_false_dic[row2['notification_no']] = false_count
-#     else:
-#         for i in group['notification_no']:
-#             consecutive_false_dic[i] = 0
-#     return 0
-
-# if 'consecutive_false' not in df.columns:
-#     print('kaishi gengixng')
-#     consecutive_false_dic = {}
-#     starttime = timeit.default_timer()
-#     print("The start time is :",starttime)
-#     df.groupby(['meter_no','contract_acct']).apply(lambda x: find_consecutive_false(x))
-#     print("The time difference is :", timeit.default_timer() - starttime)
-
-#     starttime = timeit.default_timer()
-#     print("The start time is :",starttime)
-#     df['consecutive_false']= df['notification_no'].apply(lambda x: consecutive_false_dic[x])
-#     print("The time difference is :", timeit.default_timer() - starttime)
-#     df['notification_date'] = df['notification_date'].apply(lambda x : x.strftime('%Y-%m-%d'))
-#     #df.to_sql('notificationlist',con=engine,if_exists='replace')
-
-#     print("The time difference is :", timeit.default_timer() - starttime)
-
-# print(df['prediction'].unique())
 def serve_layout():
     return html.Div(
         [
             #dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
-
+            dcc.Store(id = 'records-cps',data = None),
+            dcc.Store(id = 'anomaly-cps',data = None),
             # represents the URL bar, doesn't render anything
             dcc.Location(id='url', refresh=False),
 
