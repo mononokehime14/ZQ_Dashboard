@@ -739,7 +739,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     # df['notification_date'] = pd.to_datetime(df['notification_date'])
     # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
     DB = DBmanager()
-
     starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
         if type(start_date) == str:
@@ -766,7 +765,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     if df.empty:
         return [None,None,None,None,None,None,None,None,None]
     print("[Summary Page] Getting initial data, used time:", timeit.default_timer() - starttime)
-
     output = []
 
     total_count = 0
@@ -840,6 +838,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     output.extend(content)
 
     df_for_cf_bar = extract_df(df_for_bar,start_date,end_date)
+    #df_for_cf_bar = DB.query_in_timeperiod_distinct_user(start_date,end_date)
         
     bar = draw_consecutive_true_bar(df_for_cf_bar)
     output.append(bar)
