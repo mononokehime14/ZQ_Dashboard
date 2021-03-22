@@ -466,7 +466,11 @@ def draw_consecutive_true_bar(df):
         return None
 
     dff = df.groupby(['consecutive_false'])['notification_no'].size()
-    dff = dff.drop(labels = [0,1])
+    if 0 in dff.keys():
+        dff = dff.drop(labels = [0])
+    if 1 in dff.keys():
+        dff = dff.drop(labels = [1])
+    # dff = dff.drop(labels = [0,1])
     fig = go.Figure()
     fig.add_trace(go.Bar(y = dff,
                     x = dff.index,
@@ -531,33 +535,39 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
         return None
 
     time_width = end_date - start_date
+    print(time_width)
     if time_width <= dt.timedelta(days=31):
         time_width = dt.timedelta(days=1)
         dt_pointer = start_date
         t_dict = {}
         f_dict = {}
-        while(dt_pointer < end_date):
-            df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + time_width)]
+        while(dt_pointer <= end_date):
+            df_p = df[df['notification_date'] == dt_pointer]
             if len(df_p) != 0:
                 t_count = len(df_p[df_p['prediction'] == True])
                 f_count = len(df_p[df_p['prediction'] == False])
-                tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%-d %b")
-                t_dict[tlabel] = t_count
-                f_dict[tlabel] = f_count
-            dt_pointer += time_width
+            else:
+                t_count,f_count=0,0
+            tlabel = dt.datetime.strftime(dt_pointer,"%-d %b")
+            t_dict[tlabel] = t_count
+            f_dict[tlabel] = f_count
+            dt_pointer += relativedelta(days=+1)
     else:
         dt_pointer = dt.datetime(month=start_date.month,year=start_date.year,day=1)
         t_dict = {}
         f_dict = {}
-        while(dt_pointer < end_date):
+        while(dt_pointer <= end_date):
             #dt_pointer = dt.datetime(month=dt_pointer.month)
             df_p = df[(df['notification_date'] >= dt_pointer) & (df['notification_date'] < dt_pointer + relativedelta(months=+1))]
             if len(df_p) != 0:
                 t_count = len(df_p[df_p['prediction'] == True])
                 f_count = len(df_p[df_p['prediction'] == False])
                 tlabel = dt.datetime.strftime(df_p['notification_date'].max(),"%b %Y")
-                t_dict[tlabel] = t_count
-                f_dict[tlabel] = f_count
+            else:
+                t_count,f_count=0,0
+                tlabel = dt.datetime.strftime(dt_pointer,"%b %Y")
+            t_dict[tlabel] = t_count
+            f_dict[tlabel] = f_count
             dt_pointer += relativedelta(months=+1)
 
     fig = go.Figure()
@@ -682,11 +692,12 @@ def extract_df(df,start_date,end_date):
     df1 = df[idx]
     if df1.empty:
         return None
-    period = int((end_date - start_date) / dt.timedelta(days=30))
-    if period >= 12:
-        pass
-    else:
-        df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+    # period = int((end_date - start_date) / dt.timedelta(days=30))
+    # if period >= 12:
+    #     pass
+    # else:
+    #     df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+    df1['consecutive_false'] = df1['consec_false_12month']
 
     return df1
 
@@ -828,13 +839,13 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
     content = generate_substation_health_card_values(fig, total_count, meter_count,low_consumption,high_consumption ,other_cause)
     output.extend(content)
 
-    df_for_bar = extract_df(df_for_bar,start_date,end_date)
+    df_for_cf_bar = extract_df(df_for_bar,start_date,end_date)
         
-    bar = draw_consecutive_true_bar(df_for_bar)
+    bar = draw_consecutive_true_bar(df_for_cf_bar)
     output.append(bar)
 
-    if not df_for_bar.empty:
-        df_m2 = df_for_bar[df_for_bar['consecutive_false'] > 2]
+    if not df_for_cf_bar.empty:
+        df_m2 = df_for_cf_bar[df_for_cf_bar['consecutive_false'] > 2]
         more_than_2 = len(df_m2)
 
     more_than_2_out = [f"{more_than_2}"]

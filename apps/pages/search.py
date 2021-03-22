@@ -254,7 +254,7 @@ def update_search_result(n_clicks,input_value,records_cps,anomaly_cps):
     #false_count = 0
     #output['prediction_in_number'] = output['prediction'].apply(lambda x: turn_prediction_to_number(x,false_count))
     x = output['notification_date']
-    y = output['consecutive_false']
+    y = output['consec_false_12month']
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(

@@ -275,11 +275,12 @@ def update_data_table(start_date,end_date,checklist):
     if df1.empty:
         return None
     
-    period = int((end_date - start_date) / dt.timedelta(days=30))
-    if period >= 12:
-        pass
-    else:
-        df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+    # period = int((end_date - start_date) / dt.timedelta(days=30))
+    # if period >= 12:
+    #     pass
+    # else:
+    #     df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+    df1['consecutive_false'] = df1['consec_false_12month']
     print("[Anomly Page]Step 3: Calculating results finished, used time:", timeit.default_timer() - starttime)
     starttime = timeit.default_timer()
     drop_columns = list(set(df.columns) - set(display_columns))

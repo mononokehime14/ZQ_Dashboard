@@ -44,6 +44,7 @@ def find_consecutive_false_for_months(gdf):
             first = False
         else:
             if not point_pred:
+                date_buoy=dt.datetime(month=date_buoy.month,year=date_buoy.year,day=1)
                 loop_date = date_buoy + relativedelta(months=+1)
                 loop_count = 0
                 while (loop_date < point_pos) & (loop_count < 12):

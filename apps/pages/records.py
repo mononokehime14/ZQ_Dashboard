@@ -131,7 +131,7 @@ def draw_upper_block():
                                     {'label':'Last Year','value':'last year'},
                                     {'label':'All Time','value':'all time'},
                                 ],
-                                value='all time',
+                                value='last year',
                                 style = {'width':'150px','height':'44px'},
                             ),
                         ],
