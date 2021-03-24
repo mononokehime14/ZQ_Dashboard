@@ -62,15 +62,15 @@ class DBmanager:
     #     return 0
     
     def query(self,input_text):
-        #session = self.session
+        session = self.session
         starttime = timeit.default_timer()
         input_text = input_text.strip()
-        #df = pd.read_sql(session.query(Cell).filter(or_(Cell.notification_no == input_text, Cell.meter_no == input_text, Cell.contract_acct == input_text)).statement,session.bind)
-        statement = select(Cell).where(or_(Cell.notification_no == input_text, Cell.meter_no == input_text, Cell.contract_acct == input_text))
-        conn = self.engine.connect()
-        result = conn.execute(statement)
-        df = pd.DataFrame(result.fetchall())
-        df.columns = result.keys()
+        df = pd.read_sql(session.query(Cell).filter(or_(Cell.notification_no == input_text, Cell.meter_no == input_text, Cell.contract_acct == input_text)).statement,session.bind)
+        # statement = select(Cell).where(or_(Cell.notification_no == input_text, Cell.meter_no == input_text, Cell.contract_acct == input_text))
+        # conn = self.engine.connect()
+        # result = conn.execute(statement)
+        # df = pd.DataFrame(result.fetchall())
+        # df.columns = result.keys()
         print("Searching done, used time:", timeit.default_timer() - starttime)
         return df
 
@@ -111,24 +111,28 @@ class DBmanager:
         return df
     
     def query_in_timeperiod_distinct_user(self,start,end):
-        within_range = select(Cell).\
-                where(Cell.notification_date.between(start,end)).\
-                cte("within_range")
+        within_range = select([
+                        Cell
+                        ]).where(Cell.notification_date.between(start,end)).cte("within_range")
 
         latest_distinct = select([
-                within_range.c.notification_no,
-                func.max(within_range.c.notification_date).label('latest_one')
-                ]).group_by(within_range.c.meter_no,within_range.c.contract_acct).\
-                cte("latest_distinct")
+                            within_range.c.meter_no,
+                            within_range.c.contract_acct,
+                            func.max(within_range.c.notification_date).label("laterest_ticket")
+                        ]).group_by(within_range.c.meter_no,within_range.c.contract_acct).cte("latest_distinct")
         
-        statement = select(Cell).\
-                where(Cell.notification_no.in_(select(latest_distinct.c.notification_no)))
+        statement = select(within_range).\
+                where(and_(
+                    within_range.c.meter_no.in_(select(latest_distinct.c.meter_no)),
+                    within_range.c.contract_acct.in_(select(latest_distinct.c.contract_acct)),
+                    within_range.c.notification_date.in_(select(latest_distinct.c.laterest_ticket)),
+                ))
 
         conn = self.engine.connect()
         result = conn.execute(statement)
         df = pd.DataFrame(result.fetchall())
         df.columns = result.keys()
-        print(df.head(5))
+        print(df)
         return df
     
     def fetch_all(self):

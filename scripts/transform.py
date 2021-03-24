@@ -53,13 +53,13 @@ def find_consecutive_false_for_months(gdf):
 
                 if loop_count >= 12:
                     local_list[12] += mem_list[12]
-                    print("more than 12 month")
+                    #print("more than 12 month")
                 else:
                     mem_pointer = 0
                     for n in range(loop_count,13):
                         local_list[n] += mem_list[mem_pointer]
                         mem_pointer += 1
-                    print("greater than {} but no futher than {}".format(str(loop_count),str(loop_count+1)))
+                    #print("greater than {} but no futher than {}".format(str(loop_count),str(loop_count+1)))
 
         mem_list = local_list.copy()
         date_buoy = point_pos

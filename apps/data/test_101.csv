@@ -1,0 +1,5 @@
+notification_type,notification_no,notification_date,contract_acct,cause_code,meter_no,prediction,probability
+ZQ,qwer1,1/5/19,qwer,High Consumption,qwer,FALSE,
+ZQ,qwer2,1/6/20,qwer,High Consumption,qwer,FALSE,
+ZQ,qwer3,1/6/21,qwer,Reversed Reading,qwer,FALSE,
+ZQ,qwer4,1/7/21,qwer,Reversed Reading,qwer,FALSE,
