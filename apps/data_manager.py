@@ -75,13 +75,14 @@ class DBmanager:
         return df
 
     def trace_records(self,start_date):
-        #session = self.session
-        #df = pd.read_sql(session.query(Cell).filter(Cell.notification_date == start_date).statement, session.bind)
-        statement = select(Cell).where(Cell.notification_date == start_date)
-        conn = self.engine.connect()
-        result = conn.execute(statement)
-        df = pd.DataFrame(result.fetchall())
-        df.columns = result.keys()
+        session = self.session
+        df = pd.read_sql(session.query(Cell).filter(Cell.notification_date == start_date).statement, session.bind)
+        # statement = select(Cell).where(Cell.notification_date == start_date)
+        # conn = self.engine.connect()
+        # result = conn.execute(statement)
+        # df = pd.DataFrame(result.fetchall())
+        # df.columns = result.keys()
+
         # acct_list = pd.concat([df_at_that_date['meter_no'], df_at_that_date['contract_acct']])
         # acct_list = acct_list.tolist()
         # df= pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date <= start_date, Cell.notification_date >= end_date,Cell.consecutive_false > 0,(Cell.meter_no.in_(acct_list) | Cell.contract_acct.in_(acct_list)))).statement, session.bind)
@@ -101,13 +102,13 @@ class DBmanager:
         return df
     
     def query_in_timeperiod(self,start,end):
-        # session = self.session
-        #df = pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date >= start, Cell.notification_date <= end)).statement,session.bind)
-        statement = select(Cell).where(Cell.notification_date.between(start,end))
-        conn = self.engine.connect()
-        result = conn.execute(statement)
-        df = pd.DataFrame(result.fetchall())
-        df.columns = result.keys()
+        session = self.session
+        df = pd.read_sql(session.query(Cell).filter(and_(Cell.notification_date >= start, Cell.notification_date <= end)).statement,session.bind)
+        # statement = select(Cell).where(Cell.notification_date.between(start,end))
+        # conn = self.engine.connect()
+        # result = conn.execute(statement)
+        # df = pd.DataFrame(result.fetchall())
+        # df.columns = result.keys()
         return df
     
     def query_in_timeperiod_distinct_user(self,start,end):
@@ -136,11 +137,13 @@ class DBmanager:
         return df
     
     def fetch_all(self):
-        statement = select(Cell)
-        conn = self.engine.connect()
-        result = conn.execute(statement)
-        df = pd.DataFrame(result.fetchall())
-        df.columns = result.keys()
+        session = self.session
+        df = pd.read_sql(session.query(Cell).statement,session.bind)
+        # statement = select(Cell)
+        # conn = self.engine.connect()
+        # result = conn.execute(statement)
+        # df = pd.DataFrame(result.fetchall())
+        # df.columns = result.keys()
         return df
 
     def find_max_date(self):

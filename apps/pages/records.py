@@ -19,6 +19,9 @@ from apps.app import app
 
 display_columns = ['notification_no','notification_date','contract_acct','cause_code','meter_no','prediction','consecutive_false']
 
+#take mean obsolute value
+test_shap_value = {'Feature 1':0.94,'Feature 2':0.77, 'Feature 3':0.45,'Feature 4':0.44,'Feature 5':0.35,'Feature 6':0.34,'Feature 7':0.22,'Feature 8':0.19,'Feature 9':0.13,'Feature 10':0.11}
+
 def draw_datatable():
     return html.Div(
         [
@@ -60,7 +63,7 @@ def draw_datatable():
             dbc.Modal(
                 [
                     dbc.ModalHeader([],id = 'records-modal-header'),
-                    dbc.ModalBody([],id = 'records-modal-body'),
+                    dbc.ModalBody([],id = 'records-modal-body',style={'width':'500px','height':'400px'},),
                     dbc.ModalFooter(
                         [
                             dbc.Button(
@@ -79,6 +82,7 @@ def draw_datatable():
                 ],
                 id = "records-modal",
                 centered=True,
+                
             ),
             html.A('',id= 'fake-records-cps',style ={'display':'none'}),
         ]
@@ -279,7 +283,7 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
         #DB.update_consecutive_false()
         df = DB.trace_records(start_date)
         
-        if df is not None: 
+        if not df.empty: 
 
             if trace_option == 'last 6 month':
                 df['consecutive_false'] = df['consec_false_6month']
@@ -378,6 +382,66 @@ def toggle_modal(n1, n2, is_open):
     return is_open
 
 
+def draw_SHAP_bar():
+    y_list = list(test_shap_value.values())
+    x_list = list(test_shap_value.keys())
+    fig = go.Figure()
+    fig.add_trace(go.Bar(y = y_list,
+                    x = x_list,
+                    marker_color='#48DCC0',
+                    text = y_list,
+                    textposition = 'outside'
+                    ))
+
+    fig.update_layout(
+        #title_text = 'Consecutively reduced tickets',
+        uniformtext_minsize=8, 
+        uniformtext_mode='show',
+        margin = dict(t=20,r=5,l=5,b=5),
+        # title='Notifications with consecutive FALSE prediction',
+        yaxis=dict(
+            title='mean(|SHAP value|)',
+            titlefont_size=12,
+            tickfont_size=10,
+            tickmode = 'array',
+            tickvals = y_list,
+            zeroline = False,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
+        xaxis=dict(
+            title = 'Features',
+            titlefont_size=12,
+            tickfont_size=10,
+            tickmode = 'array',
+            tickvals = x_list,
+            zeroline = False,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
+        paper_bgcolor = '#fff',
+        plot_bgcolor = '#fff',
+        # legend=dict(
+        #     x=0,
+        #     y=1.0,
+        #     bgcolor='rgba(255, 255, 255, 0)',
+        #     bordercolor='rgba(255, 255, 255, 0)'
+        # ),
+        barmode='group',
+        # bargap=0.15, # gap between bars of adjacent location coordinates.
+        # bargroupgap=0.1 # gap between bars of the same location coordinate.
+    )
+    return  [
+        dcc.Graph(
+            id="SHAP_bar_plot",
+            figure=fig,
+            config={'displayModeBar': False,
+                    'responsive': True},
+            style={'height':'100%','width':'100%','margin-top':'5px'},
+        ),
+    ]
 
 @app.callback(
     [Output('records-modal-header','children'),
@@ -395,11 +459,12 @@ def update_modal(active_cell,rows,columns):
     if df.empty:
         return [None,None,None]
     
-    header = df.iloc[active_cell['row'],active_cell['column']]
-    header = str(header)
-    body = 'The SHAP graph has not been implemented yet~'
+    header = str(df.iloc[active_cell['row'],active_cell['column']])
+    header_string = active_cell['column_id'] + ': ' + header
+    #body = draw_SHAP_bar()
+    body = 'SHAP contribution bar has not been inserted yet~'
 
-    return [header,body,header]
+    return [header_string,body,header]
 
 # @app.callback(
 #     Output('fake-cross-page-string','children'),
