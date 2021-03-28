@@ -1,4 +1,5 @@
 import os
+import json
 
 
 import pandas as pd
@@ -160,6 +161,15 @@ class DBmanager:
             result = dt.datetime.now()
         return result.date()
     
+    def get_shapley_value(self,input_text):
+        session = self.session
+        input_text = input_text.strip()
+        shap_json = session.query(Cell.shap).filter(Cell.notification_no == input_text).scalar()
+        if shap_json is None:
+            return None
+        return shap_json
+
+
 
         
 

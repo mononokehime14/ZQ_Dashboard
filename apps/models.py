@@ -7,6 +7,7 @@ from sqlalchemy import String
 from sqlalchemy import DateTime
 from sqlalchemy import Boolean
 from sqlalchemy import Float
+from sqlalchemy import JSON
 
 
 Base = declarative_base()
@@ -55,6 +56,7 @@ class Cell(Base):
     consec_false_10month = Column(Integer)
     consec_false_11month = Column(Integer)
     consec_false_12month = Column(Integer)
+    shap = Column(JSON)
 
     def __repr__(self):
         return "<NotificationList(notification_no='{}', meter_no='{}'>".format(self.notification_no, self.meter_no)
@@ -64,3 +66,5 @@ class Cell(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+

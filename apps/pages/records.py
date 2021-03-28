@@ -20,7 +20,7 @@ from apps.app import app
 display_columns = ['notification_no','notification_date','contract_acct','cause_code','meter_no','prediction','consecutive_false']
 
 #take mean obsolute value
-test_shap_value = {'Feature 1':0.94,'Feature 2':0.77, 'Feature 3':0.45,'Feature 4':0.44,'Feature 5':0.35,'Feature 6':0.34,'Feature 7':0.22,'Feature 8':0.19,'Feature 9':0.13,'Feature 10':0.11}
+test_shap_value = {"Feature 1":0.94,"Feature 2":0.77, "Feature 3":0.45,"Feature 4":0.44,"Feature 5":-0.35,"Feature 6":-0.34,"Feature 7":0.22,"Feature 8":0.19,"Feature 9":0.13,"Feature 10":0.11}
 
 def draw_datatable():
     return html.Div(
@@ -60,31 +60,6 @@ def draw_datatable():
                     'overflowX': 'auto'
                 }
             ),
-            dbc.Modal(
-                [
-                    dbc.ModalHeader([],id = 'records-modal-header'),
-                    dbc.ModalBody([],id = 'records-modal-body',style={'width':'500px','height':'400px'},),
-                    dbc.ModalFooter(
-                        [
-                            dbc.Button(
-                                [
-                                    dcc.Link('Search',id = 'search', href='/search'),
-                                ],
-                                n_clicks=0,
-                                id='search_button',
-                                className='ml-auto',
-                            ),
-                            html.Div(style ={'width':'60%','display':'inline-block'}),
-                            dbc.Button("Close", id="close", className="ml-auto")
-                        ],
-                        style={'text-align':'left'},
-                    ),
-                ],
-                id = "records-modal",
-                centered=True,
-                
-            ),
-            html.A('',id= 'fake-records-cps',style ={'display':'none'}),
         ]
     )
 
@@ -217,6 +192,46 @@ layout = [
                         ],
                         id = 'check_records_display_block',
                     ),
+                    #pop-up window
+                    dbc.Modal(
+                        [
+                            dbc.ModalHeader([],id = 'records-modal-header'),
+                            dbc.ModalBody([],id = 'records-modal-body'),
+                            dbc.ModalFooter(
+                                [
+                                    dbc.Button(
+                                        [
+                                            dcc.Link('Search',id = 'search', href='/search'),
+                                        ],
+                                        n_clicks=0,
+                                        id='search_button',
+                                        className='ml-auto',
+                                    ),
+                                    # html.Div(style ={'width':'60%','display':'inline-block'}),
+                                    dbc.Button(
+                                        'Boost',
+                                        id = 'boost_button',
+                                        n_clicks=0,
+                                        className='ml-auto',
+                                    ),
+                                    dbc.Button(
+                                        'Downgrade',
+                                        id = 'downgrade_button',
+                                        n_clicks=0,
+                                        className='ml-auto',
+                                    ),
+                                    dbc.Button("Close", id="close", className="ml-auto"),
+                                ],
+                                style={'text-align':'left'},
+                            ),
+                        ],
+                        id = "records-modal",
+                        centered=True,
+                        size='xl',
+                        fade=False,
+                        keyboard=True,
+                    ),
+                    html.A('',id= 'fake-records-cps',style ={'display':'none'}),
                 ],
                 className="mainContent u-ph1@md u-ph3@lg u-ph5@xl",
             ),
@@ -375,20 +390,23 @@ def update_datepicker_periodly(n_intervals,n_clicks):
     
 )
 def toggle_modal(n1, n2, is_open):
-    allow_list = ['meter_no','notification_no','contract_acct']
-    if n1 or n2:
-        if n1['column_id'] in allow_list:
+    if n2:
+        return not is_open
+    elif n1:
+        if n1['column_id'] == 'notification_no':
             return not is_open
     return is_open
 
 
-def draw_SHAP_bar():
-    y_list = list(test_shap_value.values())
-    x_list = list(test_shap_value.keys())
+def draw_SHAP_importance_bar(shap_dict):
+    y_list = list(shap_dict.values())
+    x_list = list(shap_dict.keys())
     fig = go.Figure()
+    color_list = ['#48DCC0'] * len(x_list)
     fig.add_trace(go.Bar(y = y_list,
                     x = x_list,
-                    marker_color='#48DCC0',
+                    #marker = {'color':color_list},
+                    marker_color=color_list,
                     text = y_list,
                     textposition = 'outside'
                     ))
@@ -398,13 +416,15 @@ def draw_SHAP_bar():
         uniformtext_minsize=8, 
         uniformtext_mode='show',
         margin = dict(t=20,r=5,l=5,b=5),
+        clickmode = 'event+select',
+        height=300,
         # title='Notifications with consecutive FALSE prediction',
         yaxis=dict(
             title='mean(|SHAP value|)',
             titlefont_size=12,
-            tickfont_size=10,
-            tickmode = 'array',
-            tickvals = y_list,
+            # tickfont_size=10,
+            # tickmode = 'array',
+            # tickvals = y_list,
             zeroline = False,
             showgrid =  False,
             showline = True,
@@ -429,19 +449,77 @@ def draw_SHAP_bar():
         #     bgcolor='rgba(255, 255, 255, 0)',
         #     bordercolor='rgba(255, 255, 255, 0)'
         # ),
-        barmode='group',
+        barmode='relative',
         # bargap=0.15, # gap between bars of adjacent location coordinates.
         # bargroupgap=0.1 # gap between bars of the same location coordinate.
     )
-    return  [
-        dcc.Graph(
-            id="SHAP_bar_plot",
+    return dcc.Graph(
+            id="SHAP_importance_plot",
             figure=fig,
             config={'displayModeBar': False,
                     'responsive': True},
-            style={'height':'100%','width':'100%','margin-top':'5px'},
+            style={'height':'400px','width':'500px'},
+        )
+
+
+def draw_SHAP_vicissitude_bar(shap_dict):
+    y_list = list(shap_dict.values())
+    x_list = list(shap_dict.keys())
+    fig = go.Figure()
+    color_list = ['#48DCC0'] * len(x_list)
+    for i in range(len(color_list)):
+        if y_list[i] < 0:
+            color_list[i] = '#e54545'
+
+    fig.add_trace(go.Bar(y = x_list,
+                    x = y_list,
+                    #marker = {'color':color_list},
+                    marker_color=color_list,
+                    text = y_list,
+                    textposition = 'outside',
+                    orientation='h',
+                    ))
+
+    fig.update_layout(
+        # uniformtext_minsize=8, 
+        # uniformtext_mode='show',
+        margin = dict(t=20,r=5,l=5,b=5),
+        #clickmode = 'event+select',
+        yaxis=dict(
+            title= 'Features',
+            titlefont_size=12,
+            tickfont_size=10,
+            tickmode = 'array',
+            tickvals = x_list,
+            zeroline = False,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
         ),
-    ]
+        xaxis=dict(
+            title = 'mean(|SHAP value|)',
+            titlefont_size=12,
+            # tickfont_size=10,
+            # tickmode = 'array',
+            # tickvals = y_list,
+            zeroline = True,
+            zerolinecolor='#ff9d5a',
+            zerolinewidth=3,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
+        paper_bgcolor = '#fff',
+        plot_bgcolor = '#fff',
+        barmode='relative',
+    )
+    return dcc.Graph(
+            id="SHAP_vicissitude_plot",
+            figure=fig,
+            config={'displayModeBar': False,
+                    'responsive': True},
+            style={'height':'400px','width':'500px'},
+        )
 
 @app.callback(
     [Output('records-modal-header','children'),
@@ -456,49 +534,38 @@ def draw_SHAP_bar():
 
 def update_modal(active_cell,rows,columns):
     df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
-    if df.empty:
+    if (df.empty) | (not active_cell):
         return [None,None,None]
     
     header = str(df.iloc[active_cell['row'],active_cell['column']])
     header_string = active_cell['column_id'] + ': ' + header
-    #body = draw_SHAP_bar()
-    body = 'SHAP contribution bar has not been inserted yet~'
+    DB = DBmanager()
+    shap_dict = DB.get_shapley_value(header)
+    if shap_dict is None:
+        body = 'No shapley results avaliable'
+    else:
+        body = [
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            draw_SHAP_importance_bar(shap_dict)
+                        ],
+                    ),
+                    html.Div(
+                        [
+                            draw_SHAP_vicissitude_bar(shap_dict)
+                        ],
+                    ),
+
+                ],
+                style={'display':'flex'},
+            ),
+        ]
+    #body = draw_SHAP_importance_bar()
+    #body = 'SHAP contribution bar has not been inserted yet~'
 
     return [header_string,body,header]
-
-# @app.callback(
-#     Output('fake-cross-page-string','children'),
-    
-#     Input("search_button", "n_clicks"),
-
-
-#     [
-#         State('datatable','active_cell'),
-#         State('datatable','data'),
-#         State('datatable','columns')
-#     ]
-# )
-
-# def update_cross_page_string(n_clicks,active_cell,rows,columns):
-#     if n_clicks > 0:
-#         print("chufa")
-#         if not active_cell:
-#             return None
-
-#         df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
-#         if df.empty:
-#             return None
-        
-
-
-#         string = df.iloc[active_cell['row'],active_cell['column']]
-#         string = str(string)
-#         print(string)
-#         # test_string = string
-#         # print(test_string)
-#         return string
-#     else:
-#         return ''
 
 @app.callback(
     Output('records-cps','data'),
@@ -512,3 +579,44 @@ def update_real_cp_string(fake_string):
 
     # print('gen xin la ' + fake_string)
     return fake_string
+
+@app.callback(
+    [
+        Output('SHAP_importance_plot','figure'),
+        Output('boost_button','n_clicks'),
+        Output('downgrade_button','n_clicks'),
+    ],
+    Input('SHAP_importance_plot','clickData'),
+    [
+        State('boost_button','n_clicks'),
+        State('downgrade_button','n_clicks'),
+        State('SHAP_importance_plot','figure'),
+    ]
+)
+
+def update_feature(clickData,boost_click,downgrade_click,o_f):
+    fig = o_f
+    if clickData is not None: 
+        new_color_list = fig['data'][0]['marker']['color']
+        print(new_color_list)
+        print(boost_click)
+        print(downgrade_click)
+        if boost_click > 0:
+            
+            print('boost this: '+str(clickData['points'][0]['pointNumber']))
+            index = clickData['points'][0]['pointNumber']
+            new_color_list[index] = '#ff9d5a'
+            #fig.update_traces(marker_color = new_color_list)
+            
+            # boost_click = 0
+
+        if downgrade_click > 0:
+            
+            print('downgrade this: '+str(clickData['points'][0]['pointNumber']))
+            index = clickData['points'][0]['pointNumber']
+            new_color_list[index] = '#e54545'
+            #fig.update_traces(marker_color = new_color_list)
+            #fig['data'][0]['marker']['color']= new_color_list
+            # downgrade_click = 0
+        fig['data'][0]['marker']['color']= new_color_list
+    return [fig,0,0]
