@@ -20,7 +20,7 @@ from dateutil.relativedelta import relativedelta
 
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
-from apps.pages.records import get_max_date, get_min_date
+from apps.pages.records import get_max_date, get_min_date, draw_SHAP_importance_bar, draw_SHAP_vicissitude_bar
 
 display_columns = ['contract_acct','meter_no','notification_date','prediction','consecutive_false']
 def datatable():
@@ -314,7 +314,7 @@ def update_data_table(start_date,end_date,checklist):
         
 )
 def toggle_modal(n1, n2, is_open):
-    allow_list = ['meter_no','notification_no','contract_acct']
+    allow_list = ['notification_no']
     if n1 or n2:
         if n1['column_id'] in allow_list:
             return not is_open
@@ -339,10 +339,32 @@ def update_modal(active_cell,rows,columns):
     if df.empty:
         return [None,None,None]
     
-    header = df.iloc[active_cell['row'],active_cell['column']]
-    header = str(header)
-    body = 'The SHAP graph has not been implemented yet~'
-    return [header,body,header]
+    header = str(df.iloc[active_cell['row'],active_cell['column']])
+    header_string = active_cell['column_id'] + ': ' + header
+    DB = DBmanager()
+    shap_dict = DB.get_shapley_value(header)
+    if shap_dict is None:
+        body = 'No shapley results avaliable'
+    else:
+        body = [
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            draw_SHAP_importance_bar(shap_dict)
+                        ],
+                    ),
+                    html.Div(
+                        [
+                            draw_SHAP_vicissitude_bar(shap_dict)
+                        ],
+                    ),
+
+                ],
+                style={'display':'flex'},
+            ),
+        ]
+    return [header_string,body,header]
 
 @app.callback(
     Output('anomaly-cps','data'),

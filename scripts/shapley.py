@@ -13,7 +13,7 @@ from apps.settings import DB_URI
 from scripts.fixture import get_chunk
 #from apps.data_manager import find_consecutive_false
 
-test_shap_value = {"Feature 1":0.94,"Feature 2":0.77, "Feature 3":0.45,"Feature 4":0.44,"Feature 5":-0.35,"Feature 6":-0.34,"Feature 7":0.22,"Feature 8":0.19,"Feature 9":0.13,"Feature 10":0.11}
+#test_shap_value = {"Feature 1":0.94,"Feature 2":0.77, "Feature 3":0.45,"Feature 4":0.44,"Feature 5":-0.35,"Feature 6":-0.34,"Feature 7":0.22,"Feature 8":0.19,"Feature 9":0.13,"Feature 10":0.11}
 CHUNK_SIZE = 4000
 
 engine = create_engine(DB_URI)
@@ -21,7 +21,6 @@ session = sessionmaker(bind=engine)()
 
 
 if __name__ == "__main__":
-    print(json.dumps(test_shap_value))
     if len(sys.argv) > 1:
         input_file_path = sys.argv[1]
     else:
@@ -35,7 +34,6 @@ if __name__ == "__main__":
             parse_dates=['notification_date'],
             dayfirst=True
         )
-        print("sucessful")
 
         assert(
             len(df.columns) == len(Cell.__table__.columns.keys())
@@ -48,13 +46,12 @@ if __name__ == "__main__":
     num_updated = 0
     for chunk in get_chunk(df, CHUNK_SIZE):
         for i, r in chunk.iterrows():
-            print(r)
             if session.query(exists().where(Cell.notification_no == r['notification_no'])).scalar():
                 _ = session.query(Cell).filter(Cell.notification_no == r['notification_no']).all()
                 if len(_) > 1:
                     raise ValueError('duplicated primary key {}'.format(r['notification_no']))
-                
-                _[0].shap = json.dumps(test_shap_value)
+                if _[0].shap != r['shap']:
+                    _[0].shap = r['shap']
 
                 session.commit()
             
@@ -67,7 +64,7 @@ if __name__ == "__main__":
             raise
         finally:
             session.close()
-    print(num_updated)
+    print('num updated: '+ str(num_updated))
 
 
 

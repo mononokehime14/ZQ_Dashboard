@@ -352,36 +352,6 @@ def update_datepicker_periodly(n_intervals,n_clicks):
     min_date = get_min_date()
     return [max_date,min_date,max_date,max_date]
 
-# @app.callback(
-#     [
-#         Output("records-modal", "is_open"),
-#         Output('records-modal-header','children'),
-#         Output('records-modal-body','children'),
-#     ],
-
-#     Input("close", "n_clicks"),
-
-#     [
-#         State("datatable", "active_cell"), 
-#         State("records-modal", "is_open"),
-#         State('datatable','data'),
-#         State('datatable','columns'),
-#     ],
-# )
-# def toggle_modal(n1, n2, is_open,rows,columns):
-#     print("neng jin ru")
-#     if n1 or n2:
-#         if n2:
-#             df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
-#             if df.empty:
-#                 header,body = None,None
-#             header = df.iloc[n2['row'],n2['column']]
-#             header = str(header)
-#             body = 'The SHAP graph has not been implemented yet~'
-#             return [not is_open,header,body]
-#         else:
-#             return [not is_open,None,None]
-#     return [is_open,None,None]
 @app.callback(
     Output("records-modal", "is_open"),
     [Input("datatable", "active_cell"), Input("close", "n_clicks")],
@@ -390,10 +360,11 @@ def update_datepicker_periodly(n_intervals,n_clicks):
     
 )
 def toggle_modal(n1, n2, is_open):
+    allow_list = ['notification_no']
     if n2:
         return not is_open
     elif n1:
-        if n1['column_id'] == 'notification_no':
+        if n1['column_id'] in allow_list:
             return not is_open
     return is_open
 
@@ -598,12 +569,9 @@ def update_feature(clickData,boost_click,downgrade_click,o_f):
     fig = o_f
     if clickData is not None: 
         new_color_list = fig['data'][0]['marker']['color']
-        print(new_color_list)
-        print(boost_click)
-        print(downgrade_click)
         if boost_click > 0:
             
-            print('boost this: '+str(clickData['points'][0]['pointNumber']))
+            #print('boost this: '+str(clickData['points'][0]['pointNumber']))
             index = clickData['points'][0]['pointNumber']
             new_color_list[index] = '#ff9d5a'
             #fig.update_traces(marker_color = new_color_list)
@@ -612,7 +580,7 @@ def update_feature(clickData,boost_click,downgrade_click,o_f):
 
         if downgrade_click > 0:
             
-            print('downgrade this: '+str(clickData['points'][0]['pointNumber']))
+            #print('downgrade this: '+str(clickData['points'][0]['pointNumber']))
             index = clickData['points'][0]['pointNumber']
             new_color_list[index] = '#e54545'
             #fig.update_traces(marker_color = new_color_list)
