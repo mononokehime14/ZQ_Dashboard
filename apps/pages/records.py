@@ -369,17 +369,23 @@ def toggle_modal(n1, n2, is_open):
     return is_open
 
 
-def draw_SHAP_importance_bar(shap_dict):
+def draw_SHAP_decision_bar(shap_dict):
     y_list = list(shap_dict.values())
     x_list = list(shap_dict.keys())
     fig = go.Figure()
     color_list = ['#48DCC0'] * len(x_list)
-    fig.add_trace(go.Bar(y = y_list,
-                    x = x_list,
+    for i in range(len(y_list)):
+        if y_list[i] < 0:
+            color_list[i] = '#e54545'
+
+    fig.add_trace(go.Scatter(
+                    y = x_list,
+                    x = y_list,
                     #marker = {'color':color_list},
+                    orientation = 'h',
+                    mode = 'lines+markers',
                     marker_color=color_list,
                     text = y_list,
-                    textposition = 'outside'
                     ))
 
     fig.update_layout(
@@ -387,21 +393,10 @@ def draw_SHAP_importance_bar(shap_dict):
         uniformtext_minsize=8, 
         uniformtext_mode='show',
         margin = dict(t=20,r=5,l=5,b=5),
-        clickmode = 'event+select',
+        # clickmode = 'event+select',
         height=300,
         # title='Notifications with consecutive FALSE prediction',
         yaxis=dict(
-            title='mean(|SHAP value|)',
-            titlefont_size=12,
-            # tickfont_size=10,
-            # tickmode = 'array',
-            # tickvals = y_list,
-            zeroline = False,
-            showgrid =  False,
-            showline = True,
-            linecolor = '#4F5A60',
-        ),
-        xaxis=dict(
             title = 'Features',
             titlefont_size=12,
             tickfont_size=10,
@@ -412,17 +407,21 @@ def draw_SHAP_importance_bar(shap_dict):
             showline = True,
             linecolor = '#4F5A60',
         ),
+        xaxis=dict(
+            title='mean(|SHAP value|)',
+            titlefont_size=12,
+            # tickfont_size=10,
+            # tickmode = 'array',
+            # tickvals = y_list,
+            zeroline = True,
+            zerolinecolor='#ff9d5a',
+            zerolinewidth=3,
+            showgrid =  False,
+            showline = True,
+            linecolor = '#4F5A60',
+        ),
         paper_bgcolor = '#fff',
         plot_bgcolor = '#fff',
-        # legend=dict(
-        #     x=0,
-        #     y=1.0,
-        #     bgcolor='rgba(255, 255, 255, 0)',
-        #     bordercolor='rgba(255, 255, 255, 0)'
-        # ),
-        barmode='relative',
-        # bargap=0.15, # gap between bars of adjacent location coordinates.
-        # bargroupgap=0.1 # gap between bars of the same location coordinate.
     )
     return dcc.Graph(
             id="SHAP_importance_plot",
@@ -437,17 +436,17 @@ def draw_SHAP_vicissitude_bar(shap_dict):
     y_list = list(shap_dict.values())
     x_list = list(shap_dict.keys())
     fig = go.Figure()
-    color_list = ['#48DCC0'] * len(x_list)
-    for i in range(len(color_list)):
-        if y_list[i] < 0:
-            color_list[i] = '#e54545'
+    measurelist = ['relative'] * len(x_list)
+    measurelist[0] = 'absolute'
 
-    fig.add_trace(go.Bar(y = x_list,
+    fig.add_trace(go.Waterfall(
+                    y = x_list,
                     x = y_list,
-                    #marker = {'color':color_list},
-                    marker_color=color_list,
+                    measure = measurelist,
+                    decreasing = {"marker":{"color":"#e54545", "line":{"color":"red", "width":2}}},
+                    increasing = {"marker":{"color":"#48DCC0"}},
                     text = y_list,
-                    textposition = 'outside',
+                    textposition = 'inside',
                     orientation='h',
                     ))
 
@@ -520,15 +519,14 @@ def update_modal(active_cell,rows,columns):
                 [
                     html.Div(
                         [
-                            draw_SHAP_importance_bar(shap_dict)
+                            draw_SHAP_vicissitude_bar(shap_dict)
                         ],
                     ),
                     html.Div(
                         [
-                            draw_SHAP_vicissitude_bar(shap_dict)
+                            draw_SHAP_decision_bar(shap_dict)
                         ],
                     ),
-
                 ],
                 style={'display':'flex'},
             ),

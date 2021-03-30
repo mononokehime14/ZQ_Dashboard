@@ -20,7 +20,7 @@ from dateutil.relativedelta import relativedelta
 
 from apps.data_manager import DBmanager, Cell
 from apps.app import app
-from apps.pages.records import get_max_date, get_min_date, draw_SHAP_importance_bar, draw_SHAP_vicissitude_bar
+from apps.pages.records import get_max_date, get_min_date, draw_SHAP_decision_bar, draw_SHAP_vicissitude_bar
 
 display_columns = ['contract_acct','meter_no','notification_date','prediction','consecutive_false']
 def datatable():
@@ -351,7 +351,7 @@ def update_modal(active_cell,rows,columns):
                 [
                     html.Div(
                         [
-                            draw_SHAP_importance_bar(shap_dict)
+                            draw_SHAP_decision_bar(shap_dict)
                         ],
                     ),
                     html.Div(

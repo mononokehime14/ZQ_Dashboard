@@ -1,6 +1,8 @@
 import sys
 from dateutil.relativedelta import relativedelta
 import json
+import pickle
+import h5py
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -19,6 +21,13 @@ CHUNK_SIZE = 4000
 engine = create_engine(DB_URI)
 session = sessionmaker(bind=engine)()
 
+class StrToBytes:
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+    def read(self, size):
+        return self.fileobj.read(size).encode()
+    def readline(self, size=-1):
+        return self.fileobj.readline(size).encode()
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -35,14 +44,35 @@ if __name__ == "__main__":
             dayfirst=True
         )
 
-        assert(
-            len(df.columns) == len(Cell.__table__.columns.keys())
-        )
+        #read pkl files
+        # with open(input_file_path,'rb') as f:
+        #     data = pickle.load(StrToBytes(f))
+
+        # f = open(input_file_path,'rb')
+        # data = pickle.load(f)
+        #print(type(data))
+        #print(data)
+
+        #read h5 files
+        # f = h5py.File(input_file_path,'r')
+        # f.keys() #可以查看所有的主键
+        # for key in f.keys():
+        #     temp1 = f[key]
+        #     for i in temp1:
+        #         print(i)
+        #         print(temp1[i].shape)
+        #         if(i == 'block1_items'):
+        #             print(temp1[i][()])
+
+
+        # assert(
+        #     len(df.columns) == len(Cell.__table__.columns.keys())
+        # )
     except Exception as e:
         print(e)
         sys.exit(2)
 
-    #determine rows to update shap
+    #update shap for all rows in df
     num_updated = 0
     for chunk in get_chunk(df, CHUNK_SIZE):
         for i, r in chunk.iterrows():
@@ -52,6 +82,7 @@ if __name__ == "__main__":
                     raise ValueError('duplicated primary key {}'.format(r['notification_no']))
                 if _[0].shap != r['shap']:
                     _[0].shap = r['shap']
+
 
                 session.commit()
             
@@ -65,118 +96,3 @@ if __name__ == "__main__":
         finally:
             session.close()
     print('num updated: '+ str(num_updated))
-
-
-
-    # calculate consecutive False for each meter
-    # meter_ids = df.meter_no.unique()
-    # results = session.query(ZQRaw).filter(
-    #     ZQRaw.meter_no.in_(meter_ids)
-    # ).all()
-
-    # df1 = pd.DataFrame.from_records([ r.to_dict() for r in results])
-
-    # group_dfs = []
-    # for n, g in df1.groupby(['meter_no', 'contract_acct']):
-    #     _  = find_consecutive_false_for_months(g)
-    #     group_dfs.append(_)
-
-    # print('num of groups: {}'.format(len(group_dfs)))
-
-    # df2 = pd.concat(group_dfs)
-
-    # ind = 0
-    # num_inserted = 0
-    # for chunk in get_chunk(df2, CHUNK_SIZE):
-    #     summary = {
-    #         'ignore': 0,
-    #         'insert': 0,
-    #         'update': 0,
-    #     }
-
-    #     for i, r in chunk.iterrows():
-    #         _ = session.query(Cell).filter(Cell.notification_no == r['notification_no']).all()
-    #         if len(_) > 1:
-    #             raise ValueError('duplicated primary key {}'.format(r['notification_no']))
-    #         if len(_) == 0:
-    #             # insert
-    #             obj = Cell(**r.to_dict())
-    #             session.add(obj)
-    #             session.commit()
-    #             summary['insert'] += 1
-    #         else:
-    #             ignore = True
-    #             # update
-    #             if r['consecutive_false'] != _[0].consecutive_false :
-    #                 _[0].consecutive_false = r['consecutive_false']
-    #                 ignore = False
-    #                 # session.commit()
-    #             if r['consec_false_1month'] != _[0].consec_false_1month :
-    #                 _[0].consec_false_1month = r['consec_false_1month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_2month'] != _[0].consec_false_2month:
-    #                 _[0].consec_false_2month = r['consec_false_2month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_3month'] != _[0].consec_false_3month:
-    #                 _[0].consec_false_3month = r['consec_false_3month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_4month'] != _[0].consec_false_4month:
-    #                 _[0].consec_false_4month = r['consec_false_4month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_5month'] != _[0].consec_false_5month:
-    #                 _[0].consec_false_5month = r['consec_false_5month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_6month'] != _[0].consec_false_6month:
-    #                 _[0].consec_false_6month = r['consec_false_6month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_7month'] != _[0].consec_false_7month:
-    #                 _[0].consec_false_7month = r['consec_false_7month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_8month'] != _[0].consec_false_8month:
-    #                 _[0].consec_false_8month = r['consec_false_8month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_9month'] != _[0].consec_false_9month:
-    #                 _[0].consec_false_9month = r['consec_false_9month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_10month'] != _[0].consec_false_10month:
-    #                 _[0].consec_false_10month = r['consec_false_10month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_11month'] != _[0].consec_false_11month:
-    #                 _[0].consec_false_11month = r['consec_false_11month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             if r['consec_false_12month'] != _[0].consec_false_12month:
-    #                 _[0].consec_false_12month = r['consec_false_12month']
-    #                 ignore = False
-    #                 #session.commit()
-    #             session.commit()
-    #             if ignore:
-    #                 summary['ignore'] += 1
-    #                 #continue
-    #             else:
-    #                 summary['update'] += 1
-    #                 #continue
-
-    #     try:
-    #         session.commit()
-    #         num_inserted += len(chunk)
-    #     except:
-    #         session.rollback()
-    #         print("We encouter unknown situation at chunk {} ({} - {})".format(ind, chunk_size*ind, (ind+1)*chunk_size-1))
-    #         raise
-    #     finally:
-    #         session.close()
-
-    #     print(ind, summary)
-    #     ind += 1
-    # print(num_inserted)
