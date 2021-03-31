@@ -15,7 +15,7 @@ from apps.settings import DB_URI
 from scripts.fixture import get_chunk
 #from apps.data_manager import find_consecutive_false
 
-#test_shap_value = {"Feature 1":0.94,"Feature 2":0.77, "Feature 3":0.45,"Feature 4":0.44,"Feature 5":-0.35,"Feature 6":-0.34,"Feature 7":0.22,"Feature 8":0.19,"Feature 9":0.13,"Feature 10":0.11}
+test_shap_value = {"Feature 1":0.94,"Feature 2":0.77, "Feature 3":0.45,"Feature 4":0.44,"Feature 5":-0.35,"Feature 6":-0.34,"Feature 7":0.22,"Feature 8":0.19,"Feature 9":0.13,"Feature 10":0.11}
 CHUNK_SIZE = 4000
 
 engine = create_engine(DB_URI)
@@ -80,9 +80,9 @@ if __name__ == "__main__":
                 _ = session.query(Cell).filter(Cell.notification_no == r['notification_no']).all()
                 if len(_) > 1:
                     raise ValueError('duplicated primary key {}'.format(r['notification_no']))
-                if _[0].shap != r['shap']:
-                    _[0].shap = r['shap']
-
+                # if _[0].shap != r['shap']:
+                #     _[0].shap = r['shap']
+                _[0].shap = json.dumps(test_shap_value)
 
                 session.commit()
             

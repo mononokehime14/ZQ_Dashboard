@@ -7,7 +7,7 @@ from sqlalchemy import String
 from sqlalchemy import DateTime
 from sqlalchemy import Boolean
 from sqlalchemy import Float
-from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 Base = declarative_base()
@@ -56,7 +56,7 @@ class Cell(Base):
     consec_false_10month = Column(Integer)
     consec_false_11month = Column(Integer)
     consec_false_12month = Column(Integer)
-    shap = Column(JSON)
+    shap = Column(JSONB)
 
     def __repr__(self):
         return "<NotificationList(notification_no='{}', meter_no='{}'>".format(self.notification_no, self.meter_no)

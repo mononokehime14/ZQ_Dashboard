@@ -167,6 +167,7 @@ class DBmanager:
         shap_json = session.query(Cell.shap).filter(Cell.notification_no == input_text).scalar()
         if shap_json is None:
             return None
+        print(type(shap_json))
         return json.loads(shap_json)
 
 
