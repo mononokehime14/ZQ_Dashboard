@@ -13,6 +13,7 @@ from dash.dependencies import Input, Output, State, ClientsideFunction, ALL, MAT
 import pandas as pd
 from pathlib import Path
 import datetime as dt
+import numpy as np
 
 from apps.data_manager import DBmanager,Cell
 from apps.app import app
@@ -213,12 +214,14 @@ layout = [
                                         id = 'boost_button',
                                         n_clicks=0,
                                         className='ml-auto',
+                                        style = {'display':'none'},
                                     ),
                                     dbc.Button(
                                         'Downgrade',
                                         id = 'downgrade_button',
                                         n_clicks=0,
                                         className='ml-auto',
+                                        style = {'display':'none'},
                                     ),
                                     dbc.Button("Close", id="close", className="ml-auto"),
                                 ],
@@ -436,16 +439,22 @@ def draw_SHAP_vicissitude_bar(shap_dict):
     y_list = list(shap_dict.values())
     x_list = list(shap_dict.keys())
     fig = go.Figure()
-    measurelist = ['relative'] * len(x_list)
-    measurelist[0] = 'absolute'
+    # measurelist = ['relative'] * len(x_list)
+    # measurelist[0] = 'absolute'
+    color_list = ['#48DCC0'] * len(x_list)
+    for i in range(len(color_list)):
+        if y_list[i] < 0:
+            color_list[i] = '#e54545'
 
-    fig.add_trace(go.Waterfall(
+    text_list = np.around(np.array(y_list),2)
+    fig.add_trace(go.Bar(
                     y = x_list,
                     x = y_list,
-                    measure = measurelist,
-                    decreasing = {"marker":{"color":"#e54545", "line":{"color":"red", "width":2}}},
-                    increasing = {"marker":{"color":"#48DCC0"}},
-                    text = y_list,
+                    marker_color=color_list,
+                    # measure = measurelist,
+                    # decreasing = {"marker":{"color":"#e54545", "line":{"color":"red", "width":2}}},
+                    # increasing = {"marker":{"color":"#48DCC0"}},
+                    text = text_list,
                     textposition = 'inside',
                     orientation='h',
                     ))
@@ -586,3 +595,4 @@ def update_feature(clickData,boost_click,downgrade_click,o_f):
             # downgrade_click = 0
         fig['data'][0]['marker']['color']= new_color_list
     return [fig,0,0]
+
