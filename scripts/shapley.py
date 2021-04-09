@@ -40,8 +40,8 @@ if __name__ == "__main__":
         df = pd.read_csv(
             input_file_path,
             sep=',',
-            parse_dates=['notification_date'],
-            dayfirst=True
+            # parse_dates=['notification_date'],
+            # dayfirst=True
         )
 
         #read pkl files
@@ -71,7 +71,8 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
         sys.exit(2)
-
+    df['notification_no'] = df['notification_no'].astype(str)
+    print(df['shap_values'].dtype)
     #update shap for all rows in df
     num_updated = 0
     for chunk in get_chunk(df, CHUNK_SIZE):
@@ -80,12 +81,10 @@ if __name__ == "__main__":
                 _ = session.query(Cell).filter(Cell.notification_no == r['notification_no']).all()
                 if len(_) > 1:
                     raise ValueError('duplicated primary key {}'.format(r['notification_no']))
-                # if _[0].shap != r['shap']:
-                #     _[0].shap = r['shap']
-                _[0].shap = json.dumps(test_shap_value)
-
-                session.commit()
-            
+                if _[0].shap != r['shap_values']:
+                    print(r['shap_values'])
+                    _[0].shap = r['shap_values']
+                # _[0].shap = json.dumps(test_shap_value)        
         try:
             session.commit()
             num_updated += len(chunk)

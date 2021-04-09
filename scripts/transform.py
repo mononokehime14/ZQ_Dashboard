@@ -97,7 +97,9 @@ if __name__ == "__main__":
         print(e)
         sys.exit(2)
 
+    #if in the original raw dataset ZQ there is no such raw, insert it
     to_be_inserted = []
+    df['notification_no'] = df['notification_no'].astype(str)
     for i, r in df.iterrows():
         if session.query(exists().where(ZQRaw.notification_no == r['notification_no'])).scalar():
             continue
@@ -123,7 +125,7 @@ if __name__ == "__main__":
     ).all()
 
     df1 = pd.DataFrame.from_records([ r.to_dict() for r in results])
-
+    df1['notification_no'] = df1['notification_no'].astype(str)
     group_dfs = []
     for n, g in df1.groupby(['meter_no', 'contract_acct']):
         _  = find_consecutive_false_for_months(g)
@@ -207,6 +209,10 @@ if __name__ == "__main__":
                     _[0].consec_false_12month = r['consec_false_12month']
                     ignore = False
                     #session.commit()
+                if type(_[0].notification_no) == 'int64':
+                    _[0].notification_no = r['notification_no']
+                    ignore = False
+                    
                 session.commit()
                 if ignore:
                     summary['ignore'] += 1

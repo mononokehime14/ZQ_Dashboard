@@ -66,7 +66,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
         sys.exit(2)
-
+    df['notification_no'] = df['notification_no'].astype(str)
     num_inserted = batch_insert(df, CHUNK_SIZE, session)
     print(num_inserted, len(df))
     assert(num_inserted == len(df))
