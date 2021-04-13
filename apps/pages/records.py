@@ -8,6 +8,7 @@ import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_table
+import dash._callback_context
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State, ClientsideFunction, ALL, MATCH
 import pandas as pd
@@ -209,20 +210,18 @@ layout = [
                                         className='ml-auto',
                                     ),
                                     # html.Div(style ={'width':'60%','display':'inline-block'}),
-                                    dbc.Button(
-                                        'Boost',
-                                        id = 'boost_button',
-                                        n_clicks=0,
-                                        className='ml-auto',
-                                        style = {'display':'none'},
-                                    ),
-                                    dbc.Button(
-                                        'Downgrade',
-                                        id = 'downgrade_button',
-                                        n_clicks=0,
-                                        className='ml-auto',
-                                        style = {'display':'none'},
-                                    ),
+                                    # dbc.Button(
+                                    #     'Boost',
+                                    #     id = 'boost_button',
+                                    #     n_clicks=0,
+                                    #     className='ml-auto',
+                                    # ),
+                                    # dbc.Button(
+                                    #     'Downgrade',
+                                    #     id = 'downgrade_button',
+                                    #     n_clicks=0,
+                                    #     className='ml-auto',
+                                    # ),
                                     dbc.Button("Close", id="close", className="ml-auto"),
                                 ],
                                 style={'text-align':'left'},
@@ -355,21 +354,22 @@ def update_datepicker_periodly(n_intervals,n_clicks):
     min_date = get_min_date()
     return [max_date,min_date,max_date,max_date]
 
-@app.callback(
-    Output("records-modal", "is_open"),
-    [Input("datatable", "active_cell"), Input("close", "n_clicks")],
+# @app.callback(
+#     Output("records-modal", "is_open"),
+#     [Input("datatable", "active_cell"), Input("close", "n_clicks")],
     
-    State("records-modal", "is_open"),
+#     State("records-modal", "is_open"),
     
-)
-def toggle_modal(n1, n2, is_open):
-    allow_list = ['notification_no']
-    if n2:
-        return not is_open
-    elif n1:
-        if n1['column_id'] in allow_list:
-            return not is_open
-    return is_open
+# )
+# def toggle_modal(n1, n2, is_open):
+#     allow_list = ['notification_no']
+#     if n2:
+#         return not is_open
+#     elif n1:
+#         print(n1)
+#         if n1['column_id'] in allow_list:
+#             return not is_open
+#     return is_open
 
 
 def draw_SHAP_decision_bar(shap_dict):
@@ -501,20 +501,30 @@ def draw_SHAP_vicissitude_bar(shap_dict):
         )
 
 @app.callback(
-    [Output('records-modal-header','children'),
-    Output('records-modal-body','children'),
-    Output('fake-records-cps','children')],
+    [
+        Output('records-modal-header','children'),
+        Output('records-modal-body','children'),
+        Output('fake-records-cps','children'),
+        Output("records-modal", "is_open")
+    ],
 
-    Input('datatable','active_cell'),
+    [
+        Input('datatable','active_cell'),
+        Input("close", "n_clicks"),
+    ],
 
-    [State('datatable','data'),
-    State('datatable','columns')]
+    [
+        State('datatable','data'),
+        State('datatable','columns'),
+        State("records-modal", "is_open")
+    ]
 )
 
-def update_modal(active_cell,rows,columns):
+def update_modal(active_cell,n2,rows,columns,is_open):
     df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
     if (df.empty) | (not active_cell):
-        return [None,None,None]
+        print("possibility 1")
+        return [None,None,None,is_open]
     
     header = str(df.iloc[active_cell['row'],active_cell['column']])
     header_string = active_cell['column_id'] + ': ' + header
@@ -540,10 +550,19 @@ def update_modal(active_cell,rows,columns):
                 style={'display':'flex'},
             ),
         ]
-    #body = draw_SHAP_importance_bar()
-    #body = 'SHAP contribution bar has not been inserted yet~'
 
-    return [header_string,body,header]
+    allow_list = ['notification_no']
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+    if 'close' in changed_id:
+        print("possibility 2")
+        return [None,None,header,not is_open]
+    elif active_cell:
+        if active_cell['column_id'] in allow_list:
+            print("possibility 3")
+            print(active_cell)
+            return [header_string,body,header,not is_open]
+    print("possibility 4")
+    return [None,None,None,is_open]
 
 @app.callback(
     Output('records-cps','data'),
@@ -558,41 +577,41 @@ def update_real_cp_string(fake_string):
     # print('gen xin la ' + fake_string)
     return fake_string
 
-@app.callback(
-    [
-        Output('SHAP_importance_plot','figure'),
-        Output('boost_button','n_clicks'),
-        Output('downgrade_button','n_clicks'),
-    ],
-    Input('SHAP_importance_plot','clickData'),
-    [
-        State('boost_button','n_clicks'),
-        State('downgrade_button','n_clicks'),
-        State('SHAP_importance_plot','figure'),
-    ]
-)
+# @app.callback(
+#     [
+#         Output('SHAP_importance_plot','figure'),
+#         Output('boost_button','n_clicks'),
+#         Output('downgrade_button','n_clicks'),
+#     ],
+#     Input('SHAP_importance_plot','clickData'),
+#     [
+#         State('boost_button','n_clicks'),
+#         State('downgrade_button','n_clicks'),
+#         State('SHAP_importance_plot','figure'),
+#     ]
+# )
 
-def update_feature(clickData,boost_click,downgrade_click,o_f):
-    fig = o_f
-    if clickData is not None: 
-        new_color_list = fig['data'][0]['marker']['color']
-        if boost_click > 0:
+# def update_feature(clickData,boost_click,downgrade_click,o_f):
+#     fig = o_f
+#     if clickData is not None: 
+#         new_color_list = fig['data'][0]['marker']['color']
+#         if boost_click > 0:
             
-            #print('boost this: '+str(clickData['points'][0]['pointNumber']))
-            index = clickData['points'][0]['pointNumber']
-            new_color_list[index] = '#ff9d5a'
-            #fig.update_traces(marker_color = new_color_list)
+#             #print('boost this: '+str(clickData['points'][0]['pointNumber']))
+#             index = clickData['points'][0]['pointNumber']
+#             new_color_list[index] = '#ff9d5a'
+#             #fig.update_traces(marker_color = new_color_list)
             
-            # boost_click = 0
+#             # boost_click = 0
 
-        if downgrade_click > 0:
+#         if downgrade_click > 0:
             
-            #print('downgrade this: '+str(clickData['points'][0]['pointNumber']))
-            index = clickData['points'][0]['pointNumber']
-            new_color_list[index] = '#e54545'
-            #fig.update_traces(marker_color = new_color_list)
-            #fig['data'][0]['marker']['color']= new_color_list
-            # downgrade_click = 0
-        fig['data'][0]['marker']['color']= new_color_list
-    return [fig,0,0]
+#             #print('downgrade this: '+str(clickData['points'][0]['pointNumber']))
+#             index = clickData['points'][0]['pointNumber']
+#             new_color_list[index] = '#e54545'
+#             #fig.update_traces(marker_color = new_color_list)
+#             #fig['data'][0]['marker']['color']= new_color_list
+#             # downgrade_click = 0
+#         fig['data'][0]['marker']['color']= new_color_list
+#     return [fig,0,0]
 

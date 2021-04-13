@@ -1,6 +1,7 @@
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
+import dash._callback_context
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State, ClientsideFunction, ALL
 from urllib.parse import urlparse, parse_qs
@@ -211,11 +212,15 @@ layout = [
 #     return false_count
 
 @app.callback(
-    [Output('trend_graph_div','children'),
-    Output('output_datatable','data')],
+    [
+        Output('trend_graph_div','children'),
+        Output('output_datatable','data'),
+    ],
 
-    [Input('search_button','n_clicks'),
-    Input('search_input_content','value')],
+    [
+        Input('search_button','n_clicks'),
+        Input('search_input_content','value')
+    ],
 
     [
         State('records-cps','data'),
@@ -231,9 +236,11 @@ def update_search_result(n_clicks,input_value,records_cps,anomaly_cps):
             else:
                 print('Search page receive input from records:' + anomaly_cps)
                 input_value = anomaly_cps
+
         else:
             print('Search page receive input from anomaly:' + records_cps)
             input_value = records_cps
+
 
     # if (input_value is None) | (n_clicks <= 0):
     #     return [None,None]
