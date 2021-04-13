@@ -1,5 +1,5 @@
 REPO=porter.azurecr.io/porter/zq-dashboard
-TAG=0.1.17
+TAG=0.1.18
 TEST_POD_NAME=zq-dashboard
 
 .PHONY: deploy
