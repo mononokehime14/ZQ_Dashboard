@@ -82,7 +82,6 @@ if __name__ == "__main__":
                 if len(_) > 1:
                     raise ValueError('duplicated primary key {}'.format(r['notification_no']))
                 if _[0].shap != r['shap_values']:
-                    print(r['shap_values'])
                     _[0].shap = r['shap_values']
                 # _[0].shap = json.dumps(test_shap_value)        
         try:

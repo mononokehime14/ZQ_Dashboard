@@ -762,6 +762,7 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
         end_date = get_max_date()
         end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
     
+    #needs refinement: can add a div showcase error result
     if df.empty:
         return [None,None,None,None,None,None,None,None,None]
     print("[Summary Page] Getting initial data, used time:", timeit.default_timer() - starttime)

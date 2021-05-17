@@ -1,3 +1,4 @@
+from apps.models import Cell
 import os
 import json
 
@@ -12,32 +13,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import exists, func
 import datetime as dt
 import timeit
-from pandarallel import pandarallel
 
 
 from apps.models import Cell
 from apps.settings import DB_URI
 
-# conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
 engine = create_engine(DB_URI)
 
 Base = declarative_base()
-
-# def find_consecutive_false(gdf):
-
-#     consecutive_false_dict = {}
-#     gdf = gdf.sort_values(by='notification_date', ascending=True)
-#     # global false_count
-#     false_count = 0 
-#     for i, r in gdf.iterrows():
-#         if r['prediction'] == False:
-#             false_count += 1
-#         elif r['prediction'] == True:
-#             false_count = 0
-#         consecutive_false_dict[r['notification_no']] = false_count
-
-#     gdf['consecutive_false'] = gdf['notification_no'].apply(lambda x: consecutive_false_dict.get(x))
-#     return gdf
 
 class DBmanager:
     def __init__(self):
