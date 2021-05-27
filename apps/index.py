@@ -35,9 +35,14 @@ auth = dash_auth.BasicAuth(
 )
 
 def serve_layout():
+    """This is the high level structure of the Dashboard.
+
+    Returns:
+        html.Div: The entire div that will be rendered.
+    """
     return html.Div(
         [
-            #dcc.Store(id="memory-value", data=df.to_json(orient='split',date_format='iso')),
+            # Intermediary store for auto-jumping to Search Page
             dcc.Store(id = 'records-cps',data = None),
             dcc.Store(id = 'anomaly-cps',data = None),
             # represents the URL bar, doesn't render anything
@@ -113,6 +118,14 @@ def update_date(n):
     [Input("url", "pathname")],
 )
 def display_page(pathname):
+    """This function allows dashboard to have multiple pages
+
+    Args:
+        pathname (url): url of current rendering page
+
+    Returns:
+        html.Div: current rendering Div/page
+    """
     pages = {
         "/": {
             "title": "Summary",

@@ -23,6 +23,22 @@ session = sessionmaker(bind=engine)()
 #month_list = ['one_month','two_month','three_month','four_month','five_month','six_month','seven_month', 'eight_month','nine_month','ten_month','eleven_month','twelve_month','whole']
 
 def find_consecutive_false_for_months(gdf):
+    """This function calculates consecutive false number for each Group.
+    'Each group' means each unique meter number and contract acct (unique customer)
+    We will sort all records first, then we will look at each notification one by one.
+    We calculate: what is the time interval between notification A and B (B after A)?
+    if time interval is 2 months, then we can update B's 2 months, 3 months, ... 12 months and all time tracings using A's.
+    For B's 1 months consecutive false (this number means how many consecutive falses are there starting from one month before B),
+    we do not update (keep is zero), because last notification A is 2 months before.
+
+    So during the calculaton, we will keep a memory list of different tracing interval (1,2,3,...12 months and all time).
+
+    Args:
+        gdf (groupby object): one unique (meter number and contract acct)'s all records
+
+    Returns:
+        gdf: with new columns containing consecutive false number
+    """
     #print("New grp start ---------")
     consecutive_false_dict = {}
     gdf = gdf.sort_values(by='notification_date', ascending=True)

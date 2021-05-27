@@ -19,6 +19,11 @@ from apps.app import app
 display_columns = ['notification_no','meter_no','contract_acct','notification_date','cause_code','prediction']
 
 def search_bar():
+    """This function renders the search bar at the top, which contains a input bar and a search button
+
+    Returns:
+        Div: Div for rendering
+    """
     return html.Div(
         [
             html.Div(
@@ -57,61 +62,12 @@ def search_result_display_dot(prediction):
     else:
         return html.Span(className="healthy-search-result-dot",style={'background-color':'#48dcc0'})
 
-# def search_result_display(notification_id,notification_date,prediction,cause_code):
-#     return [
-#         html.Div(
-#             [
-#                 html.Div(
-#                     [
-#                         html.Div(
-#                             [
-#                                 html.Div(
-#                                     [
-#                                         search_result_display_dot(prediction),
-#                                     ],
-#                                     style= {'text-align':'center'}
-#                                 ),
-#                             ],
-#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell u-pt3',
-#                         ),
-#                         html.Div(
-#                             [
-#                                 html.P('Notification ID',className = 'h3',style={'color':'#818A91'}),
-#                                 html.P(notification_id,className = 'h4')
-#                             ],
-#                             className = 'col-sm-2 push-sm-1 col-md-2 push-md-1 col-lg-2 push-lg-1 u-cell',
-#                         ),
-#                         html.Div(
-#                             [
-#                                 html.P('Notification date',className = 'h3',style={'color':'#818A91'}),
-#                                 html.P(notification_date,className = 'h4')
-#                             ],
-#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
-#                         ),
-#                         html.Div(
-#                             [
-#                                 html.P('Prediction',className = 'h3',style={'color':'#818A91'}),
-#                                 html.P(prediction,className = 'h4')
-#                             ],
-#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
-#                         ),
-#                         html.Div(
-#                             [
-#                                 html.P('Cause_code',className = 'h3',style={'color':'#818A91'}),
-#                                 html.P(cause_code,className = 'h4')
-#                             ],
-#                             className = 'col-sm-2 col-md-2 col-lg-2 u-cell',
-#                         ),
-#                     ],
-#                     className = 'u-grid',
-#                     style={'width':'100%'},
-#                 ),
-#             ],
-#             className = 'lm--card',
-#         )
-#     ]
-
 def output_table():
+    """This draws the data table of search outputs
+
+    Returns:
+        DataTable: data table for rendering
+    """
     return dash_table.DataTable(
         id='output_datatable',
         columns=[
@@ -134,6 +90,11 @@ def output_table():
 
     
 def search_result_display_none():
+    """Displayed if there is no matching data
+
+    Returns:
+        Div: Div for rendering
+    """
     return html.Div(
         [   
             html.Div(
@@ -192,24 +153,6 @@ layout = [
     ),
 ]
 
-# def turn_into_display_list(row,output_display):
-#     id_name = list(row['notification_no'])[0:10]
-#     id_name = ''.join(id_name)
-#     date = row['notification_date'].strftime('%Y-%m-%d')
-#     return output_display.extend(search_result_display(id_name,date,row['prediction'],row['cause_code']))
-
-# def turn_prediction_to_number(x,false_count):
-#     if x == 'False':
-#         false_count += 1
-#         print('xijia1')
-#     else:
-#         if false_count > 0:
-#             false_count = 0
-#             print('qusi')
-#         else:
-#             false_count -= 1
-#             print('shangjian1')
-#     return false_count
 
 @app.callback(
     [
@@ -229,6 +172,17 @@ layout = [
 )
 
 def update_search_result(n_clicks,input_value,records_cps,anomaly_cps):
+    """This is the main funciton of search page, display search results
+
+    Args:
+        n_clicks (int): clicking times of the search button
+        input_value (str): user input
+        records_cps (str): passed from records page (during jumping from records page to search page)
+        anomaly_cps (str): passed from anomaly page (during jumping from anomaly page to search page)
+
+    Returns:
+        list: list of objects to render
+    """
     if input_value is None:
         if records_cps is None:
             if anomaly_cps is None:

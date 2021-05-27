@@ -44,30 +44,6 @@ if __name__ == "__main__":
             # dayfirst=True
         )
 
-        #read pkl files
-        # with open(input_file_path,'rb') as f:
-        #     data = pickle.load(StrToBytes(f))
-
-        # f = open(input_file_path,'rb')
-        # data = pickle.load(f)
-        #print(type(data))
-        #print(data)
-
-        #read h5 files
-        # f = h5py.File(input_file_path,'r')
-        # f.keys() #可以查看所有的主键
-        # for key in f.keys():
-        #     temp1 = f[key]
-        #     for i in temp1:
-        #         print(i)
-        #         print(temp1[i].shape)
-        #         if(i == 'block1_items'):
-        #             print(temp1[i][()])
-
-
-        # assert(
-        #     len(df.columns) == len(Cell.__table__.columns.keys())
-        # )
     except Exception as e:
         print(e)
         sys.exit(2)
@@ -77,13 +53,16 @@ if __name__ == "__main__":
     num_updated = 0
     for chunk in get_chunk(df, CHUNK_SIZE):
         for i, r in chunk.iterrows():
+            # we will first look into notificationlist table, to check whether the notification number is in the store
+            #if it is already there, we can update the SHAP values
             if session.query(exists().where(Cell.notification_no == r['notification_no'])).scalar():
                 _ = session.query(Cell).filter(Cell.notification_no == r['notification_no']).all()
                 if len(_) > 1:
                     raise ValueError('duplicated primary key {}'.format(r['notification_no']))
+
+                #update SHAP values
                 if _[0].shap != r['shap_values']:
-                    _[0].shap = r['shap_values']
-                # _[0].shap = json.dumps(test_shap_value)        
+                    _[0].shap = r['shap_values']    
         try:
             session.commit()
             num_updated += len(chunk)

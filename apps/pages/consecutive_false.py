@@ -24,6 +24,7 @@ from apps.pages.records import get_max_date, get_min_date, draw_SHAP_decision_ba
 
 display_columns = ['contract_acct','meter_no','notification_date','prediction','consecutive_false']
 def datatable():
+    """Data Table Div"""
     return html.Div(
         [
             dash_table.DataTable(
@@ -47,16 +48,6 @@ def datatable():
                 style_cell = {
                     'text-align':'center',
                 },
-                # style_cell_conditional=[
-                #     {
-                #         'if': {'column_id': 'notification_date'},
-                #         'width': '15%'
-                #     },
-                #     {
-                #         'if': {'column_id': 'cause_code'},
-                #         'width': '15%'
-                #     },
-                # ],
                 style_table={
                     'overflowX': 'auto'
                 }
@@ -87,6 +78,7 @@ def datatable():
     )
 
 def manipulation_bar():
+    """Manipulation bar div"""
     return html.Div(
         [
             html.Div(
@@ -193,34 +185,26 @@ layout = [
 )
 
 def update_datepicker_periodly(n_clicks,n_intervals):
+    """updating datepicker, because latest/earliest datetimes in database are changing"""
     max_date = get_max_date()
     min_date = get_min_date()
     return [max_date + dt.timedelta(days=1),min_date,max_date,min_date,max_date]
 
 def extract_consec_false(gdf):
+    """This function selects the latest notification for each unique (meter & contract acct).
+    This means selecting latest notification as a representative for each customer user.
+
+    Args:
+        gdf (groupby object): each distinct (meter number & contract acct)'s notifications
+
+    Returns:
+        row: latest notification
+    """
     if len(gdf) == 1:
         row = gdf.iloc[0]
     else:
         index = gdf['notification_date'].argmax()
         row = gdf.iloc[index]
-
-    # row_date = row['notification_date']
-    # date_buoy = start_date 
-    # loop_count = 0
-    # if date_buoy == row_date:
-    #     pass
-    # else:
-    #     date_buoy += relativedelta(months=+1)
-    #     while (date_buoy <= row_date) & (loop_count < 12):
-    #         date_buoy += relativedelta(months=+1)
-    #         loop_count += 1
-
-    #loop_count = int((row['notification_date'] - start_date) / dt.timedelta(days=30))
-
-    # if loop_count >= 12:
-    #     pass
-    # else:
-    #     row['consecutive_false'] = row['consec_false_{}month'.format(str(loop_count + 1))]
 
     return row
 
@@ -232,6 +216,16 @@ def extract_consec_false(gdf):
 )
 
 def update_data_table(start_date,end_date,checklist):
+    """Main function of consecutive_false page, render the data table.
+
+    Args:
+        start_date (str/datetime): start date
+        end_date (str/datetime): end date
+        checklist (list): options selected by users, determining range of consecutive false number we are looking at.
+
+    Returns:
+        data: data table
+    """
     starttime = timeit.default_timer()
     DB = DBmanager()
     if (start_date is not None) & (end_date is not None):
@@ -241,8 +235,6 @@ def update_data_table(start_date,end_date,checklist):
             end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
         if(start_date < end_date):
             df = DB.query_in_timeperiod(start_date,end_date)
-            # df = df[df['notification_date'] > start_date]
-            # df = df[df['notification_date'] < end_date]
         else:
             df = DB.fetch_all()
             start_date = get_min_date()
@@ -261,12 +253,6 @@ def update_data_table(start_date,end_date,checklist):
     
     print("[Anomly Page]Step 1: Fetching initial data accomplished, used time:", timeit.default_timer() - starttime)
     starttime = timeit.default_timer()
-    # group_dfs = []
-    # for n, g in df.groupby(['meter_no', 'contract_acct']):
-    #     _  = extract_consec_false(g)
-    #     group_dfs.append(_)
-    # df1 = pd.DataFrame()
-    # df1 = df1.append(group_dfs)
     idx = df.groupby(['meter_no','contract_acct'])['notification_date'].transform(max) == df['notification_date']
     df1 = df[idx]
 
@@ -275,11 +261,6 @@ def update_data_table(start_date,end_date,checklist):
     if df1.empty:
         return None
     
-    # period = int((end_date - start_date) / dt.timedelta(days=30))
-    # if period >= 12:
-    #     pass
-    # else:
-    #     df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
     df1['consecutive_false'] = df1['consec_false_12month']
     print("[Anomly Page]Step 3: Calculating results finished, used time:", timeit.default_timer() - starttime)
     starttime = timeit.default_timer()
@@ -306,6 +287,11 @@ def update_data_table(start_date,end_date,checklist):
         return df2.to_dict('records')
 
 
+""" Following code will not be activated in real case.
+Because we can only view SHAP value base on notification number: when we click on notification number,
+a pop-up window will come out and dispaly shap graph.
+But in consecutive false page, we will not show notification number for now...
+"""
 @app.callback(
     Output("modal", "is_open"),
     [Input("data_table", "active_cell"), Input("close", "n_clicks")],
@@ -335,6 +321,7 @@ def toggle_modal(n1, n2, is_open):
 )
 
 def update_modal(active_cell,rows,columns):
+    """This function draws the pop up window, using information of active cell that users clicked"""
     df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
     if df.empty:
         return [None,None,None]
@@ -373,6 +360,16 @@ def update_modal(active_cell,rows,columns):
 )
 
 def update_real_cp_string(fake_string):
+    """This function updates intermediary store of notification number.
+    We use this intermediary string to update in the index page during our juming from records page to search page,
+    so that search page is able to get the notification number that we want to search for.
+
+    Args:
+        fake_string (string): notification number selected by users
+
+    Returns:
+        data: intermedairy store
+    """
     if fake_string is None:
         return None
 

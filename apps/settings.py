@@ -2,6 +2,7 @@ import os
 
 
 def get_env_or_raise(name, default_value=None):
+    """Get environment settings"""
     var = os.environ.get(name)
     msg = '{} is not set in environment variables'
     if not var and default_value is None:

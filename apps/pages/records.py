@@ -21,10 +21,11 @@ from apps.app import app
 
 display_columns = ['notification_no','notification_date','contract_acct','cause_code','meter_no','prediction','consecutive_false']
 
-#take mean obsolute value
+#these shap values are for testing only
 test_shap_value = {"Feature 1":0.94,"Feature 2":0.77, "Feature 3":0.45,"Feature 4":0.44,"Feature 5":-0.35,"Feature 6":-0.34,"Feature 7":0.22,"Feature 8":0.19,"Feature 9":0.13,"Feature 10":0.11}
 
 def draw_datatable():
+    """This function draws the data table of records"""
     return html.Div(
         [
             dash_table.DataTable(
@@ -48,16 +49,6 @@ def draw_datatable():
                 style_cell = {
                     'text-align':'center',
                 },
-                # style_cell_conditional=[
-                #     {
-                #         'if': {'column_id': 'notification_date'},
-                #         'width': '15%'
-                #     },
-                #     {
-                #         'if': {'column_id': 'cause_code'},
-                #         'width': '15%'
-                #     },
-                # ],
                 style_table={
                     'overflowX': 'auto'
                 }
@@ -76,6 +67,7 @@ def get_min_date():
     return min_date
 
 def draw_upper_block():
+    """There is two pickers, and some summary information in the top bar of records page"""
     return html.Div(
         [
             html.Div(
@@ -242,6 +234,15 @@ layout = [
 ]
 
 def generate_little_chart(true_count, false_count):
+    """This function draws donut graph in uppper status block, showcasing how many notifications are reduced by ZQ model.
+
+    Args:
+        true_count (int): number of reduced notifications
+        false_count (int)): number of not reduced notifications
+
+    Returns:
+        list: list of divs that make the graph
+    """
     labels = ['TRUE','FALSE']
 
     fig = go.Figure(data=[go.Pie(labels=labels, values=[true_count, false_count], direction="clockwise", sort=False, hole=.76)])
@@ -280,15 +281,20 @@ def generate_little_chart(true_count, false_count):
 )
 
 def update_records(start_date,trace_option,download_clicks,max_date,min_date):
-    if (start_date is not None) & (trace_option is not None):
-        #df = pd.read_json(df,orient="split")
-        starttime = timeit.default_timer()
-        # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-        # engine = sqlalchemy.create_engine(conn_url)
-        # df = pd.read_sql_table('notificationlist',con = engine)
+    """Main funciton of records page, updating records data.
 
-        # df['notification_date'] = pd.to_datetime(df['notification_date'])
-        # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+    Args:
+        start_date (str/datetime): the date that users want to check its records
+        trace_option (str/datetime): how many time interval should we look back? This will affect consecutive false number
+        download_clicks (int): clicks of download button
+        max_date (datetime): latest datetime in data base
+        min_date (dattime): earliest datetime in data base
+
+    Returns:
+        list: list of objects for rendering
+    """
+    if (start_date is not None) & (trace_option is not None):
+        starttime = timeit.default_timer()
         if type(start_date) == str:
             start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
             max_date = dt.datetime.strptime(max_date,"%Y-%m-%d")
@@ -350,29 +356,14 @@ def update_records(start_date,trace_option,download_clicks,max_date,min_date):
 )
 
 def update_datepicker_periodly(n_intervals,n_clicks):
+    """updating datepicker, because latest/earliest datetimes in database are changing"""
     max_date = get_max_date()
     min_date = get_min_date()
     return [max_date,min_date,max_date,max_date]
 
-# @app.callback(
-#     Output("records-modal", "is_open"),
-#     [Input("datatable", "active_cell"), Input("close", "n_clicks")],
-    
-#     State("records-modal", "is_open"),
-    
-# )
-# def toggle_modal(n1, n2, is_open):
-#     allow_list = ['notification_no']
-#     if n2:
-#         return not is_open
-#     elif n1:
-#         print(n1)
-#         if n1['column_id'] in allow_list:
-#             return not is_open
-#     return is_open
-
 
 def draw_SHAP_decision_bar(shap_dict):
+    """Right scatter graph in the pop up window"""
     y_list = list(shap_dict.values())
     x_list = list(shap_dict.keys())
     fig = go.Figure()
@@ -436,6 +427,7 @@ def draw_SHAP_decision_bar(shap_dict):
 
 
 def draw_SHAP_vicissitude_bar(shap_dict):
+    """Left bar graph in the pop up window"""
     y_list = list(shap_dict.values())
     x_list = list(shap_dict.keys())
     fig = go.Figure()
@@ -521,6 +513,7 @@ def draw_SHAP_vicissitude_bar(shap_dict):
 )
 
 def update_modal(active_cell,n2,rows,columns,is_open):
+    """This function draws the pop up window, using information of active cell that users clicked"""
     df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
     if (df.empty) | (not active_cell):
         print("possibility 1")
@@ -571,47 +564,20 @@ def update_modal(active_cell,n2,rows,columns,is_open):
 )
 
 def update_real_cp_string(fake_string):
+    """This function updates intermediary store of notification number.
+    We use this intermediary string to update in the index page during our juming from records page to search page,
+    so that search page is able to get the notification number that we want to search for.
+
+    Args:
+        fake_string (string): notification number selected by users
+
+    Returns:
+        data: intermedairy store
+    """
     if fake_string is None:
         return None
 
     # print('gen xin la ' + fake_string)
     return fake_string
 
-# @app.callback(
-#     [
-#         Output('SHAP_importance_plot','figure'),
-#         Output('boost_button','n_clicks'),
-#         Output('downgrade_button','n_clicks'),
-#     ],
-#     Input('SHAP_importance_plot','clickData'),
-#     [
-#         State('boost_button','n_clicks'),
-#         State('downgrade_button','n_clicks'),
-#         State('SHAP_importance_plot','figure'),
-#     ]
-# )
-
-# def update_feature(clickData,boost_click,downgrade_click,o_f):
-#     fig = o_f
-#     if clickData is not None: 
-#         new_color_list = fig['data'][0]['marker']['color']
-#         if boost_click > 0:
-            
-#             #print('boost this: '+str(clickData['points'][0]['pointNumber']))
-#             index = clickData['points'][0]['pointNumber']
-#             new_color_list[index] = '#ff9d5a'
-#             #fig.update_traces(marker_color = new_color_list)
-            
-#             # boost_click = 0
-
-#         if downgrade_click > 0:
-            
-#             #print('downgrade this: '+str(clickData['points'][0]['pointNumber']))
-#             index = clickData['points'][0]['pointNumber']
-#             new_color_list[index] = '#e54545'
-#             #fig.update_traces(marker_color = new_color_list)
-#             #fig['data'][0]['marker']['color']= new_color_list
-#             # downgrade_click = 0
-#         fig['data'][0]['marker']['color']= new_color_list
-#     return [fig,0,0]
 

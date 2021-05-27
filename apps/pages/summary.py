@@ -32,6 +32,7 @@ def get_min_date():
     return min_date
 
 def status_block(title, id_prefix, additional_classnames=""):
+    """This is the upper block, showing summary status"""
     return html.Div(
         [
             html.Div(
@@ -113,35 +114,6 @@ def status_block(title, id_prefix, additional_classnames=""):
                                 ],
                                 className="lm--card-item col-sm-6 col-md-6 col-lg-6 col-xl-6 u-cell",
                             ),
-                            # html.Div(
-                            #     [
-                            #         html.Div(
-                            #             [
-                            #                 html.Button(
-                            #                     [
-                            #                         html.Div(
-                            #                             [
-                            #                                 html.Div([html.P("Attention Needed", className="h5",style={'color':'#4F5A60'})]),
-                            #                                 html.Div(
-                            #                                     [
-                            #                                         html.Span(id=f"{id_prefix}_dot_indicator", className="alert-dot"),
-                            #                                         html.Span(id=f"{id_prefix}_alert_value", className="mini_container_value",style={'color':'#4F5A60'}),
-                            #                                     ],
-                            #                                     style = {'text-align':'left'},
-                            #                                 ),
-                            #                             ],
-                            #                         ),
-                            #                     ],
-                            #                     id = 'alert_button',
-                            #                     n_clicks = 0,
-                            #                     className = 'transparent_button',
-                            #                 ),
-                            #             ],
-                            #             style = {'text-align':'left'},
-                            #         ),
-                            #     ],
-                            #     className="lm--card-item col-sm-auto col-md-auto u-pb0 u-cell",
-                            # ),
                         ],
                         className = 'u-grid',
                         style={'width':'100%'}
@@ -230,6 +202,11 @@ def status_block(title, id_prefix, additional_classnames=""):
     )
 
 def manipulation_bar():
+    """This function draws the manipulation bar at the right side
+
+    Returns:
+        list: list of divs for rendering
+    """
     return html.Div(
         [
             html.Div(
@@ -269,7 +246,7 @@ def manipulation_bar():
         style={'text-align':'center','display':'block'}
     )
 
-
+#footer not used.
 def footer():
     return html.Div(
         [
@@ -396,14 +373,11 @@ layout = [
             ),
         ],
     ),
-    # html.Div(
-    #     [
-    #         footer()
-    #     ],
-    # ),
 
 ]
 
+# this function is not used. But actually it can be used and should bring better user experience.
+# So instead of display nothing, a "nothing" message should be displayed. But Ren Hao has not got time to finish this refinement at last.
 def draw_non_consecutive_found():
         return html.Div(
         [   
@@ -462,6 +436,7 @@ def generate_substation_health_card_values(fig, total_count, ok_count,infected,i
     ], [f"{ok_count}"],[f"{infected}"],[f"{inactive}"],[f"{towatch}"]
 
 def draw_consecutive_true_bar(df):
+    """This function draws consecutive reduction graph."""
     if df.empty:
         return None
 
@@ -531,6 +506,17 @@ def draw_consecutive_true_bar(df):
     ]
 
 def draw_prediction_time_bar_graph(df,start_date,end_date):
+    """This function draws the graph that showcase how many notifications are reduced/not reduced in monthly scale.
+    If user selected date range is less than 21 days, it will showcase in daily scale.
+
+    Args:
+        df ([type]): [description]
+        start_date (datetime): start date
+        end_date (datetime): end date
+
+    Returns:
+        list: list of div for rendering
+    """
     if df.empty:
         return None
 
@@ -638,6 +624,15 @@ def draw_prediction_time_bar_graph(df,start_date,end_date):
     ]
 
 def draw_reduced_number_chart(true_count, false_count):
+    """This function draws donut graph in uppper status block, showcasing how many notifications are reduced by ZQ model.
+
+    Args:
+        true_count (int): number of reduced notifications
+        false_count (int)): number of not reduced notifications
+
+    Returns:
+        list: list of divs that make the graph
+    """
     labels = ['TRUE','FALSE']
 
     fig = go.Figure(data=[go.Pie(labels=labels, values=[true_count, false_count], direction="clockwise", sort=False, hole=.76)])
@@ -673,6 +668,7 @@ def draw_reduced_number_chart(true_count, false_count):
     ])
 
 def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,temp_value):
+    """This function updates the uppper status block"""
     if n_clicks % 2 == 1:
         label_list.append(temp_label)
         value_list.append(temp_value)
@@ -686,17 +682,22 @@ def update_status_chart(label_list,value_list,total_count,n_clicks,temp_label,te
     return label_list,value_list,total_count
 
 def extract_df(df,start_date,end_date):
+    """This function selects the latest notification for each unique (meter & contract acct).
+    This means selecting latest notification as a representative for each customer user.
+
+    Args:
+        df (dataframe): the whole dataframe
+
+    Returns:
+        df: df after selecting latest ones for each group only
+    """
     if df.empty:
         return None
     idx = df.groupby(['meter_no','contract_acct'])['notification_date'].transform(max) == df['notification_date']
     df1 = df[idx]
     if df1.empty:
         return None
-    # period = int((end_date - start_date) / dt.timedelta(days=30))
-    # if period >= 12:
-    #     pass
-    # else:
-    #     df1['consecutive_false'] = df1['consec_false_{}month'.format(str(period + 1))]
+
     df1['consecutive_false'] = df1['consec_false_12month']
 
     return df1
@@ -732,12 +733,19 @@ def extract_df(df,start_date,end_date):
     ])
 
 def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
-    # conn_url = 'postgresql+psycopg2://postgres:1030@172.17.0.2/dash_db'
-    # engine = sqlalchemy.create_engine(conn_url)
-    # df = pd.read_sql_table('notificationlist',con = engine)
+    """This function updates all divs in the summary page
 
-    # df['notification_date'] = pd.to_datetime(df['notification_date'])
-    # df['prediction'] = df['prediction'].apply(lambda x : 'False' if ((x == 'FALSE')|(x == 'False')) else 'True')
+    Args:
+        start_date (string/datetime): start date chosen by user
+        end_date (string/datetime): end date chosen by user
+        meter_n_clicks (int): total clicking times of this button
+        lc_n_clicks (int): total clicking times of this button
+        hc_n_clicks (int): total clicking times of this button
+        other_n_clicks (int): total clicking times of this button
+
+    Returns:
+        list: list of all divs that need to be rendered
+    """
     DB = DBmanager()
     starttime = timeit.default_timer()
     if (start_date is not None) & (end_date is not None):
@@ -747,8 +755,6 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
             end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
         if(start_date < end_date):
             df = DB.query_in_timeperiod(start_date,end_date)
-            # df = df[df['notification_date'] > start_date]
-            # df = df[df['notification_date'] < end_date]
         else:
             df = DB.fetch_all()
             start_date = get_min_date()
@@ -879,6 +885,15 @@ def substation_health_charts_callback(start_date,end_date,meter_n_clicks,lc_n_cl
 )
 
 def update_datepicker_periodly(n_clicks,n_intervals):
+    """This function fetches max/min date from database
+
+    Args:
+        n_clicks (int): this button click is just for testing
+        n_intervals (int): time interval, when it is 10 min this function will be activated
+
+    Returns:
+        list: list of dates
+    """
     max_date = get_max_date()
     min_date = get_min_date()
     return [max_date + dt.timedelta(days=1),min_date,max_date,min_date,max_date]
@@ -900,6 +915,17 @@ def update_datepicker_periodly(n_clicks,n_intervals):
 )
 
 def update_button_display(meter_n_clicks,lc_n_clicks,hc_n_clicks,other_n_clicks):
+    """This function update the style of cause code buttons after clicking
+
+    Args:
+        meter_n_clicks (int): total clicking time of this button
+        lc_n_clicks (int): total clicking time of this button
+        hc_n_clicks (int): total clicking time of this button
+        other_n_clicks (int): [total clicking time of this button
+
+    Returns:
+        list: list of button styles
+    """
     if meter_n_clicks % 2 == 1:
         meter_class = 'selected_button'
     else:
